@@ -48,8 +48,12 @@ app.add_middleware(
 )
 
 # 获取静态文件目录路径（用于部署时挂载前端构建产物）
-# 使用当前工作目录（Docker WORKDIR /app）作为基准
-STATIC_DIR = os.path.join(os.getcwd(), "static")
+# 从 backend/src/api/main.py 向上三级到项目根目录，然后访问 static/
+# __file__ = /app/src/api/main.py
+# dirname x 3 = /app
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(_CURRENT_DIR))
+STATIC_DIR = os.path.join(_PROJECT_ROOT, "static")
 
 # 挂载静态文件
 if os.path.exists(STATIC_DIR):
