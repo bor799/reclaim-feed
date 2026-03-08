@@ -48,7 +48,8 @@ app.add_middleware(
 )
 
 # 获取静态文件目录路径（用于部署时挂载前端构建产物）
-STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+# 从 backend/src/api/main.py 向上三级到 backend/，然后到项目根目录的 static/
+STATIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../static"))
 
 # 挂载静态文件
 if os.path.exists(STATIC_DIR):
