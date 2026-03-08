@@ -82,15 +82,15 @@ const Layout = () => {
             {/* Mobile Bottom Navigation (Hidden on Desktop) */}
             <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 pb-safe z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.04)] h-16 flex items-center justify-between px-2">
                 <NavLink to="/sources" className={getMobileNavClasses}>
-                    <Rss size={22} className={({ isActive }) => (isActive ? 'stroke-[2.5px]' : 'stroke-2')} />
+                    <Rss size={22} className="stroke-2" />
                     <span className="text-[10px] font-medium font-sans">Sources</span>
                 </NavLink>
                 <NavLink to="/feed" className={getMobileNavClasses}>
-                    <Newspaper size={22} className={({ isActive }) => (isActive ? 'stroke-[2.5px]' : 'stroke-2')} />
+                    <Newspaper size={22} className="stroke-2" />
                     <span className="text-[10px] font-medium font-sans">Feed</span>
                 </NavLink>
                 <NavLink to="/notes" className={getMobileNavClasses}>
-                    <NotebookPen size={22} className={({ isActive }) => (isActive ? 'stroke-[2.5px]' : 'stroke-2')} />
+                    <NotebookPen size={22} className="stroke-2" />
                     <span className="text-[10px] font-medium font-sans">Notes</span>
                 </NavLink>
             </nav>
