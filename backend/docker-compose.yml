@@ -1,0 +1,13 @@
+services:
+  agent:
+    build: .
+    env_file: .env
+    environment:
+      - TZ=Asia/Shanghai
+      - AUTH_ENABLED=False
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./config:/app/config
+      - ./state:/app/state
+    restart: unless-stopped

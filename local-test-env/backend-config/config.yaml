@@ -1,0 +1,75 @@
+# 100X Knowledge Agent — 本地测试环境配置
+
+llm:
+  provider: "zhipu"
+  model: "glm-4.7"
+  api_key_env: "ZHIPU_API_KEY"
+  api_base: "https://open.bigmodel.cn/api/coding/paas/v4"
+  temperature: 0.1
+
+# 信息源配置 - 从现有项目同步（测试环境使用前5个）
+sources:
+  - name: "Simon Willison"
+    type: "rss"
+    url: "https://simonwillison.net/atom/everything/"
+    category: "AI进展"
+    enabled: true
+
+  - name: "Hacker News"
+    type: "rss"
+    url: "https://news.ycombinator.com/rss"
+    category: "AI进展"
+    enabled: true
+
+  - name: "Jeff Geerling"
+    type: "rss"
+    url: "https://www.jeffgeerling.com/blog.xml"
+    category: "AI进展"
+    enabled: true
+
+  - name: "Krebs on Security"
+    type: "rss"
+    url: "https://krebsonsecurity.com/feed/"
+    category: "AI进展"
+    enabled: true
+
+  - name: "Daring Fireball"
+    type: "rss"
+    url: "https://daringfireball.net/feeds/main"
+    category: "AI进展"
+    enabled: true
+
+# 过滤配置
+filter:
+  high_quality_threshold: 7.0
+  edge_case_threshold: 5.0
+  scoring_prompt: "backend-config/prompts/scoring.md"
+  keywords_include: []
+  keywords_exclude: ["广告", "推广"]
+
+# 萃取配置
+extraction:
+  prompt: "backend-config/prompts/extraction.md"
+  output_fields:
+    - one_line_summary
+    - hidden_insights
+    - golden_quotes
+    - methodology
+
+# 输出配置 - 测试环境（Obsidian 已配置，Telegram 关闭）
+output:
+  obsidian_root: "/Users/murphy/Documents/Obsidian Vault/信息源"
+  obsidian_format_prompt: "backend-config/prompts/obsidian_format.md"
+  telegram_enabled: false
+  email_enabled: false
+
+# 用户偏好 - 从现有项目同步
+focus_areas:
+  - "大模型 Agent 应用"
+  - "美股交易策略"
+  - "AI 行业动态"
+  - "实战踩坑经验"
+  - "技术复盘与故障分析"
+
+user_name: "murphy"
+timezone: "Asia/Shanghai"

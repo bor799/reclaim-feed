@@ -1,0 +1,66 @@
+[0;32m================================[0m
+[0;32m100X Agent - 后端测试环境启动[0m
+[0;32m================================[0m
+
+[1;33m⚠️  虚拟环境不存在，正在创建...[0m
+Obtaining file:///Users/murphy/Documents/Obsidian%20Vault/%E8%81%8C%E4%B8%9A%E5%8F%91%E5%B1%95/%E9%A1%B9%E7%9B%AE%E6%A1%88%E4%BE%8B/100X_%E7%9F%A5%E8%AF%86%E8%90%83%E5%8F%96%E7%B3%BB%E7%BB%9F/100x-knowledge-agent/backend
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'error'
+  error: subprocess-exited-with-error
+  
+  × Preparing editable metadata (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [32 lines of output]
+      Traceback (most recent call last):
+        File "/Users/murphy/Documents/Obsidian Vault/职业发展/项目案例/100X_知识萃取系统/100x-knowledge-agent/backend/.venv/lib/python3.13/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 167, in prepare_metadata_for_build_editable
+          hook = backend.prepare_metadata_for_build_editable
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      AttributeError: module 'hatchling.build' has no attribute 'prepare_metadata_for_build_editable'
+      
+      During handling of the above exception, another exception occurred:
+      
+      Traceback (most recent call last):
+        File "/Users/murphy/Documents/Obsidian Vault/职业发展/项目案例/100X_知识萃取系统/100x-knowledge-agent/backend/.venv/lib/python3.13/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 353, in <module>
+          main()
+          ~~~~^^
+        File "/Users/murphy/Documents/Obsidian Vault/职业发展/项目案例/100X_知识萃取系统/100x-knowledge-agent/backend/.venv/lib/python3.13/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 335, in main
+          json_out['return_val'] = hook(**hook_input['kwargs'])
+                                   ~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/Users/murphy/Documents/Obsidian Vault/职业发展/项目案例/100X_知识萃取系统/100x-knowledge-agent/backend/.venv/lib/python3.13/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 176, in prepare_metadata_for_build_editable
+          whl_basename = build_hook(metadata_directory, config_settings)
+        File "/private/var/folders/qk/1gk76_89349f9pcrp9yvrbrh0000gn/T/pip-build-env-glsr5oc1/overlay/lib/python3.13/site-packages/hatchling/build.py", line 83, in build_editable
+          return os.path.basename(next(builder.build(directory=wheel_directory, versions=["editable"])))
+                                  ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/private/var/folders/qk/1gk76_89349f9pcrp9yvrbrh0000gn/T/pip-build-env-glsr5oc1/overlay/lib/python3.13/site-packages/hatchling/builders/plugin/interface.py", line 92, in build
+          self.metadata.validate_fields()
+          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+        File "/private/var/folders/qk/1gk76_89349f9pcrp9yvrbrh0000gn/T/pip-build-env-glsr5oc1/overlay/lib/python3.13/site-packages/hatchling/metadata/core.py", line 266, in validate_fields
+          self.core.validate_fields()
+          ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+        File "/private/var/folders/qk/1gk76_89349f9pcrp9yvrbrh0000gn/T/pip-build-env-glsr5oc1/overlay/lib/python3.13/site-packages/hatchling/metadata/core.py", line 1366, in validate_fields
+          getattr(self, attribute)
+          ~~~~~~~^^^^^^^^^^^^^^^^^
+        File "/private/var/folders/qk/1gk76_89349f9pcrp9yvrbrh0000gn/T/pip-build-env-glsr5oc1/overlay/lib/python3.13/site-packages/hatchling/metadata/core.py", line 531, in readme
+          raise OSError(message)
+      OSError: Readme file does not exist: README.md
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+
+[notice] A new release of pip is available: 24.3.1 -> 26.0.1
+[notice] To update, run: pip install --upgrade pip
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> See above for output.
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.

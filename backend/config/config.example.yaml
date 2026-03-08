@@ -1,0 +1,99 @@
+# 100X Knowledge Agent — 配置文件示例
+# 复制为 config.yaml 后修改
+
+llm:
+  provider: "zhipu"
+  model: "glm-4.7"
+  api_key_env: "ZHIPU_API_KEY"        # 从环境变量读取
+  api_base: "https://open.bigmodel.cn/api/coding/paas/v4"
+  temperature: 0.1
+
+# 信息源配置 (默认信息源集 - 来源于旧版知识萃取系统)
+sources:
+  - name: "Hacker News Best"
+    type: "rss"
+    url: "https://hnrss.org/best"
+    category: "科技前沿"
+    enabled: true
+
+  - name: "Simon Willison"
+    type: "rss"
+    url: "https://simonwillison.net/atom/everything/"
+    category: "AI进展"
+    enabled: true
+
+  - name: "Jeff Geerling"
+    type: "rss"
+    url: "https://www.jeffgeerling.com/blog.xml"
+    category: "极客硬件"
+    enabled: true
+
+  - name: "Paul Graham"
+    type: "rss"
+    url: "http://www.aaronsw.com/2002/feeds/pgessays.rss"
+    category: "深度思考"
+    enabled: true
+
+  - name: "Gary Marcus"
+    type: "rss"
+    url: "https://garymarcus.substack.com/feed"
+    category: "AI批判"
+    enabled: true
+
+  - name: "Lilian Weng (OpenAI)"
+    type: "rss"
+    url: "https://lilianweng.github.io/index.xml"
+    category: "AI硬核研报"
+    enabled: true
+
+  - name: "宝玉的分享 (Baoyu)"
+    type: "rss"
+    url: "https://baoyu.io/feed.xml"
+    category: "AI翻译与实战"
+    enabled: true
+
+  # Twitter (需要 Agent-Reach)
+  # - name: "karpathy"
+  #   type: "twitter"
+  #   enabled: false
+
+  # 微信 Inbox
+  # - name: "WeChat Inbox"
+  #   type: "wechat"
+  #   enabled: false
+  #   extra:
+  #     inbox_path: "~/.nanobot/workspace/wechat_inbox.txt"
+
+# 过滤配置
+filter:
+  high_quality_threshold: 7.0
+  edge_case_threshold: 5.0
+  scoring_prompt: "config/prompts/scoring.md"
+  keywords_include: []
+  keywords_exclude: ["广告", "推广"]
+
+# 萃取配置
+extraction:
+  prompt: "config/prompts/extraction.md"
+  output_fields:
+    - one_line_summary
+    - hidden_insights
+    - golden_quotes
+    - methodology
+
+# 输出配置
+output:
+  obsidian_root: ""                    # 留空则不写入 Obsidian
+  obsidian_format_prompt: "config/prompts/obsidian_format.md"
+  telegram_enabled: false
+  email_enabled: false
+
+# 用户偏好
+focus_areas:
+  - "大模型 Agent 应用"
+  - "美股交易策略"
+  - "AI 行业动态"
+  - "实战踩坑经验"
+
+user_name: "your_name"
+timezone: "Asia/Shanghai"
