@@ -32,7 +32,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN pip install --no-cache-dir uv
 
 # 复制后端依赖配置
-COPY backend/pyproject.toml backend/uv.lock ./
+COPY backend/pyproject.toml .
+COPY backend/uv.lock .
 
 # 安装 Python 依赖 (仅生产环境)
 RUN uv sync --no-dev --frozen
