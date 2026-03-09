@@ -1,90 +1,143 @@
 # 炼器房 (Reclaim your feed) - 前端开发规范与执行文档
 
-**文档目标**：指导前端开发人员（或 AI Agent）完成 `100X Knowledge Agent` (现名`炼器房`) 的前端架构落地与后续演进。此规范基于 React + Vite 实际技术栈与当前已交付的 3 大基础路由模块。
+**文档目标**：指导前端开发人员完成 `100X Knowledge Agent` (现名`炼器房`) 的前端架构落地与后续演进。此规范基于 React + Vite 实际技术栈，重构目标为在桌面端达到媲美 macOS 原生应用（如 Obsidian、Cursor、苹果备忘录）的极客质感，并在交互层引入抖音式的沉浸式全屏流。
 
-## 1. 核心设计规范 (Design Guidelines)
-- **视觉风格**：追求极致的现代简约、沉浸式、极客感，去除多余线条。设计系统围绕 Flat Design 与 Apple Human Interface Guidelines (HIG) 质感展开。
-- **字体排版**：
-  - 英文字体优先使用 `Inter` 及系统无衬线原生字体。
-  - 中文字体优先使用 `PingFang SC`, `Microsoft YaHei`。
-  - 核心诉求：拉大字号与字重级差（H1, H2, 正文），强化可读性与信息层级。**移动端基础字号建议 16px+**，防止 Safari 触发原生输入法自动缩放。
-- **组件库与技术栈**：
-  - 核心栈：`React` + `Vite`。
-  - 样式驱动：`Tailwind CSS`，全局变量抽离在 `index.css`。
-  - 图标库：`lucide-react`。
-  - **核心禁令**：禁止使用厚重的全局组件库（如 Ant Design/Material UI），所有组件通过 Tailwind 拼装以保持性能最佳与定制化。
+## 1. 核心设计与 macOS 桌面级专属优化 (Design Guidelines)
 
-## 2. 移动优先与 iOS 深度优化 (Mobile-First & iOS Optimization)
-考虑到核心消费场景为 iOS 设备（iPhone），前端实现必须达到**原生级 App 的沉浸体验**：
-1. **安全区适配 (Safe Area)**：必须使用 `env(safe-area-inset-top)` 和 `env(safe-area-inset-bottom)` 避免被刘海屏、灵动岛、底部小白条遮挡内容。
-2. **触控冗余 (Touch Targets)**：所有可交互元素（按钮、卡片、开关）响应区最小达到 `44x44 pt` (Apple HIG 建议)。
-3. **PWA 与沉浸模式**：
-   - 提供 `manifest.json` 支持"添加到主屏幕" (Add to Home Screen)。
-   - 包含 `<meta name="apple-mobile-web-app-capable" content="yes">` 隐去 Safari 原生地址栏。
-4. **弹簧滚动拦截 (Overscroll)**：全局 `body` 设置 `overscroll-behavior-y: none`，防止页面整体出现拉拽白边的廉价感；仅允许内容容器（如 `.feed-container`）内部使用原生级顺滑滚动。
-5. **手势操作转化**：摒弃 Hover 依赖，核心高频操作应当支持手指点击或显性的底部动作条(Bottom Action Bar)。
+视觉风格追求极致的现代简约、沉浸式、极客感。为了在桌面端（尤其 Mac 环境）提供极其丝滑的原生体验，必须在全局进行以下专属优化：
 
-## 3. 路由与整体布局 (Routing & Global Layout)
-根据最新迭代，整体路由模块划分为三个核心并列视图：
-- `/feed` -> Feed (信息流阅览区，处理日常输入，默认跳转首页)
-- `/notes` -> Notes (笔记复盘区，沉淀高价值信息)
-- `/sources` -> Sources (信息源管理，配置上游漏斗)
+### 1.1 ⌨️ 全局快捷键与键盘导航 (Keyboard Shortcuts)
+Mac 用户高度依赖键盘（Cmd ⌘ 键）。要求前端接入 `react-hotkeys-hook` 等库监听全局键盘事件：
+- **`Cmd + K`**：全局唤起命令面板 (Command Palette) 或搜索框，用于快速跳转模块或搜索 Note。
+- **`Cmd + S`**：在 `/notes` 的 Markdown 编辑器中，劫持默认的网页保存（`e.preventDefault()`），改为触发本地或远端笔记内容的 Save 动作。
+- **`Cmd + N`**：快速新建一条 Note 笔记。
+- **`J` / `K` 键遍历**：在 `/feed` 主信息流中，无鼠标沉浸操作，使用 `J` (下移) 和 `K` (上移) 快速高亮选中卡片，敲击 `Enter` 直接展开分屏面板查看详情。
 
-### 2.1 全局 Layout 容器设计
-- **侧边栏 (Sidebar)**：
-  - 左侧常驻导航。包含主菜单切分。状态激活时使用品牌色 (`Primary/CTA`) 予以高亮。底色保持纯净，收起时留白充足以将视觉重点让于主视区。
-- **主内容区 (Main Layout)**：
-  - 大量留白，最大宽度居中 (`max-w-6xl`)，实现视觉聚焦，抛开一切使人分心的边框。
+### 1.2 🖱️ Mac 专属滚动轴美化 (Custom Scrollbar)
+针对外接鼠标时出现的丑陋 Chrome 实心滚动条，需在 `index.css` 重写以贴合 Apple HIG 审查标准：
+```css
+/* 让 Chrome/Edge 的滚动条看起来像 Mac 原生 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+```
 
-## 3. 核心功能模块 (Core View Modules)
+### 1.3 🖥️ 桌面端 PWA 安装体验 (Progressive Web App)
+让 Web App 在 Mac 的 Launchpad 和 Dock 栏独立驻留：
+- `manifest.json`：设置 `display: "standalone"`，并提供苹果标准规格的大圆角矩形 Icon。
+- **深色模式边框融合**：配置 `<meta name="theme-color" content="#ffffff">`（深色模式下自动切换为深色），使独立 App 在打开时顶部标题栏的颜色和页面背景无缝融合，消除浏览器界限感。
 
-### 模块一：Feed 信息流阅览区 (`/feed`)
-*系统的主阵地，用户消耗碎片时间进行快速过滤与阅读的区域。*
+### 1.4 🔤 字体抗锯齿优化 (Font Smoothing)
+确保 `Inter` 或 `PingFang SC` 等高级字体在 Mac 上渲染得不"发虚"、不"显胖"，保持纤细锐利：
+```css
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+```
 
-1. **信息卡片设计 (Feed Card)**
-   - 瀑布流/列表排布 AI 萃取后的结果。
-   - 卡片核心呈现：**文章标题**、**AI 核心摘要**、特殊的**关键洞察与金句层 (Key Insights)**。
-   - 带有醒目的 **AI 评分** (如 ⭐ 9.5) 与 **来源信标**。
-2. **阅读到沉淀的无缝闭环 (Bookmark 联动)**
-   - 卡片右上角设置**收藏按钮**。
-   - **联动逻辑**：点击收藏（实心标记）后，不仅该状态发生改变，并且**自动联动触发生成一条对应的 Note**，携带着所有源数据和洞察流向 `/notes` 页面，完成"浏览 -> 沉淀"的动作循环。
+### 1.5 🪟 毛玻璃与沉浸式效果 (Glassmorphism)
+Chrome 对 `backdrop-filter: blur()` 的支持已极其完善。
+在弹窗（Model）、下拉菜单（Dropdown）、底栏/侧边悬浮组件、全局搜索面板处，强烈禁止使用死板纯色。应使用诸如 `bg-white/80 backdrop-blur-md`（深色态对应换色）的特效，让底层视面的图文等信息呈现"毛玻璃"透出感。
 
-### 模块二：Notes 笔记复盘区 (`/notes`)
-*沉浸式审阅、个人思考批注的内容管理大脑。*
+---
 
-1. **结构设计 (左右分屏)**
-   - **左半侧列表**：结构化笔记列表。包含常规搜索。从 Feed 收藏触发生成的笔记具有特殊的"收藏"或"来源"标识，与手动创建区分。
-   - **右半侧编辑器**：阅读与交互打磨区。
-2. **编辑器交互**
-   - **查看模式**：以格式化渲染的方式呈现信息源、原摘要、洞察。
-   - **编辑模式**：无干扰白板 Markdown 输入，供用户重新排版、写下延展思考。
-   - 交互操作：支持增删改查。当在 Notes 侧删除了由 Feed 衍生的记录时，联动解绑 Feed 侧的收藏状态。
+## 2. 三大核心界面架构 (Three Core Views)
 
-### 模块三：Sources 信息源配置区 (`/sources`)
-*控制知识管道第一层漏斗的配置中心。*
+整体交互从传统的左右侧边栏模式，激进重构为 **移动优先 + 沉浸式滑动** 的全屏交互框架。
 
-1. **配置表与状态检索**
-   - 核心层列表展示所有 RSS、Twitter 等源的健康度与开启状态 (Active/Paused)。
-   - 提供基于 Category 的分类管控。
-2. **直观的增删改查面板**
-   - 支持新增/修改 源地址 URL、系统源类型 (RSS/Twitter/YouTube 等)。
-   - 后续需跟进后端接口变动，支持在前端修改特定源的抓取频率 (`cron_interval`) 以及自动标签关联 (`default_tags`)。
+### 界面一：主界面 (Feed & Notes 信息流) 📱
+*像刷抖音一样，全视口沉浸式摄入经过 AI 高度浓缩的知识洞察。*
 
-## 4. 后续模块预留 (Workflow & Settings)
-基于 Agent 属性，在跑通前后端读取后，后续需在 UI 层面平铺：
-1. **工作流 Prompt 编辑区 (Workflow 配置)**：图形化配置四个漏斗阶段（过滤分标准、萃取特殊模板），打通 API 使得用户的每一次更新可覆盖 `config/prompts/` Markdown 文件。
-2. **System Settings**：多厂商模型 API Key 管理、Telegram/飞书 推送 Webhook 配置、本地同步物理地址指定。
+1. **信息流形态 (TikTok 模式)**
+   - 全屏留白渲染。按时间线顺滑归类，且 Feed (输入流) 与 Note (沉淀的笔记) 同源混合展示。
+   - 上下滑动查收知识，使用 `J` / `K` 键盘游游走。
+   - 卡片本身仅展示核心 `Key Insights`，左上角含悬浮按钮 (Floating Menu)。
+   - **快速提取**：主界面或悬浮窗支持直接输入/粘贴外部的 URL 地址，传给后端秒级进行抓取解析进信息流。
+2. **左滑/展开动作 (具体信息与批注)**
+   - 对单条信息左滑，或者敲击 `Enter`：从侧边（或分屏）丝滑滑出原文结构化解析与右侧的 Notes Markdown 批注版。
+3. **全局导航悬浮收敛**
+   - 不再放置常驻厚重的导航栏。主界面只有 Feed 内容流。
+   - **左上角**：悬浮按钮展开左侧（对应进入内容详情/菜单集）。
+   - **右下角入口**：悬浮提供进入界面二与界面三的入口。
 
-## 5. 数据与状态管理落地规范
-- **当前态 (Local MVP)**：目前凭借 React `Context API` (`AppContext`) 与 `localStorage` 进行全状态流转，用极低成本跑通了概念验证与 UI 定调。
-- **演进态 (Integration with APIs)**：
-  1. 所有状态从 localStorage 无缝剥离为 Axios 请求驱动，统一交由 `src/services/api.ts` 抽象处理。
-  2. **拦截器底座 (Auth Interceptor)**：鉴于项目预留的 SaaS 化方向，请求封装层必须注入 Token 处理逻辑（如每次拦截附带 `Authorization: Bearer <token>`），保证页面无痛兼容未来可能会引入的多租户体系。
+### 界面二：Prompt 与信息源配置管道 (Sources & Prompts) 🔧
+*控制知识漏斗的核心中枢。*
 
-## 6. 预期交付与迭代顺序
-- [x] **步骤 1**：环境与框架搭建 (Vite/React)，全局 Tailwind CSS 规范落户。
-- [x] **步骤 2**：完成核心 Feed / Notes / Sources MVP 页面的渲染与极简式 Layout。
-- [x] **步骤 3**：完成前端 `localStorage` 层面的复杂联动（收藏自动建笔记、上下文状态管理）。
-- [ ] **步骤 4**：全面联调改造升级后的 FastAPI，接管假数据，跑通线上实际 Pipeline 的数据回流。
-- [ ] **步骤 5**：升级 Notes 区域 Markdown 编辑器体验（集成如 `react-markdown`，增加语法高亮与渲染能力）。
-- [ ] **步骤 6**：补齐系统级的 Settings 面板和 Prompt 修改页。
+1. **信息源配置 (Ingestion)**
+   - 管理你所有的订阅源 (RSS, Twitter, YouTube Playlist)。
+   - **高阶设定（与后端协同要求）**：每类信息源、甚至单个信息源，可单独设定独立抓取频率与 Cron 同步策略（例如："RSS 高频源"每 4 小时跑一次；"某推主"每 24 小时跑一次），实现定向精度。
+2. **提取流提示词配置 (Pipeline Prompts)**
+   - 此处外挂维护打分过滤标准 (Score Filtering)、结构格式化模板 (Extraction Structure)，实现所见即所得的配置即代码，修改即通过 API 覆盖后端的 markdown prompt。
+
+### 界面三：系统底层设置 (Settings) ⚙️
+*LLM大脑引擎与物理环境配置区。*
+
+1. **Bot / 大模型 API 部署**
+   - 图形化展示、增加、管理后端 AI 工作引擎厂商（允许配置 Anthropic Claude, OpenAI, DeepSeek 或本地 Ollama 模型）。维护其对应的 Base URL 与 Tokens 密钥。
+2. **通用与语种生态 (Language & Prefs)**
+   - 前台 UI 语种（简中/En）设定。
+   - 输出/通知管道配置选项（如 Telegram/飞书 Webhook 密钥填报区）。
+
+---
+
+## 3. UI 线框逻辑图 (Wireframe Logic Map)
+
+```text
+======================= 1. 主界面 (默认常态) ==========================
+[☰左上悬浮菜单]                                            [输入/粘贴链接]
+ 
+             📅 今天 / Today
+          +----------------------------------------------+
+          | [高分 Feed] 文章标题...                      |
+          | - ⚡ 这里是 AI 萃取的核心金句/水下洞见 1        |
+          | - ⚡ ...                                     |
+          +----------------------------------------------+
+                            
+          +----------------------------------------------+
+          | [📝 Note] 我们昨天的复盘 ...                 |
+          | ...                                          |
+          +----------------------------------------------+
+             (像 Tiktok 一样深邃滚动的流，配合 J/K 快捷键)
+
+                                           [右下悬浮：🔧漏斗 / ⚙️设置]
+========================================================================
+
+===================== 2. 输入 URL / 看详见 / 审阅 Note ==================
+ (由主界面回车或左滑触发展开)
+ +-------------------------------+-------------------------------------+
+ | [← 返回信息流]                  |                  [ Cmd+S 快捷保存 ]  |
+ |                               |                                     |
+ | [ 提取原文卡片区 ]              | [ Markdown 笔槽 ]                   |
+ | - 分析摘要                      | # 我的随笔                           |
+ | - 原始外链                      | 补充说明...                          |
+ | - 等...                        | - 待办事项...                        |
+ +-------------------------------+-------------------------------------+
+
+===================== 3. 配置管道 (漏斗与控制台) =========================
+ (悬浮菜单进入)
+ [ + 添加新源 ]      |当前 Active Prompts: V2 - Custom Profile|
+ +-------------------------------------------------------------------+
+ | 来源名        类型      定时抽取频率 (Cron)        状态              |
+ | [Karpathy]   [RSS]    [ 每 8 小时 ⌄ ]            [ Active ✓ ]      |
+ | [新闻摘要]    [Twitter] [ 每 24 小时 ⌄]            [ Paused ⏸ ]      |
+ +-------------------------------------------------------------------+
+```
+
+## 4. 后端对齐与开发验收 CheckList (与协作方确认)
+
+1. [ ] **支持单源定时参数**：后端需支持每个 Source 在 DB 或 Config 中携带有各自的抓取频率/时间参数，并调度之。
+2. [ ] **快速抽取 Endpoint**：需后端提供一个全新的 URL 即时解析入库接口（`POST /api/v1/extract/quick { url: string }`）。
+3. [ ] **混合渲染排序接口**：基于日期的 `/feed` 接口除了承载 `Sources` 抓取的，也要能混排展示 `Notes` 表的数据（Timeline 日志式排序）。
+4. [ ] **设置中心 API 读写**：增加配置读取和修改接口以支撑前端界面动态更改大模型 `provider` 以及修改系统级 `system_prompt` 等。

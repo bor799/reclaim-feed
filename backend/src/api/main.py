@@ -73,16 +73,37 @@ async def startup():
     
     # 启动后台定时任务
     _scheduler = AsyncIOScheduler()
-    _scheduler.add_job(
-        _pipeline.run,
-        'interval',
-        hours=6,
-        id='periodic_pipeline_run',
-        replace_existing=True,
-        next_run_time=None # 如果希望立刻执行可以设为 datetime.now()
-    )
+    
+    # 根据源独立挂载任务
+    for source in _config.sources:
+        if source.enabled and source.cron_interval:
+            interval_kwargs = {}
+            interval_str = source.cron_interval.lower()
+            if interval_str.endswith("h"):
+                interval_kwargs['hours'] = int(interval_str[:-1])
+            elif interval_str.endswith("m"):
+                interval_kwargs['minutes'] = int(interval_str[:-1])
+            elif interval_str == "daily":
+                interval_kwargs['days'] = 1
+            else:
+                interval_kwargs['hours'] = 6 # fallback
+
+            _scheduler.add_job(
+                _pipeline.run,
+                'interval',
+                **interval_kwargs,
+                id=f'pipeline_run_{source.name}',
+                replace_existing=True,
+                kwargs={"source_name": source.name}
+            )
+
+    # 兜底：如果没有任何源配了 cron_interval，还是挂一个默认的？
+    # 取决于需求，目前按文档要求各自独立挂载。
+    if not _scheduler.get_jobs():
+        logger.info("没有检测到任何具有 cron_interval 的源，未注册定时任务。")
+
     _scheduler.start()
-    logger.info("后台定时任务 (APScheduler) 已启动，设置为每 6 小时自动萃取一次。")
+    logger.info("后台定时任务 (APScheduler) 已根据配置独立启动。")
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -135,26 +156,48 @@ async def get_user_stats(user_id: str = Depends(get_current_user)):
 
 @app.get("/api/v1/feed")
 async def get_feed(
+    page: int = 1,
+    limit: int = 50,
     date: str = None, 
     is_annotated: Optional[bool] = None,
     user_id: str = Depends(get_current_user)
 ):
-    """[MODIFIED] 获取信息流，支持按是否有批注过滤"""
+    """[MODIFIED] 升级为 Unified Timeline API，支持混合时间线倒序与分页下发"""
     store = ItemStore(_config)
     
-    # 模拟多租户：原本 store.get_all() 可以过滤 user_id
     if date:
         items = store.get_by_date(date)
     else:
         items = store.get_all()
         
+    # 按租户过滤
+    items = [i for i in items if i.get("user_id", "local_admin") == user_id]
+        
+    # 支持按是否有批注过滤 (Notes 和 普通 Feed 都可以同构在 items 里)
     if is_annotated is not None:
         items = [
             i for i in items 
             if bool(i.get("is_annotated") or i.get("annotation")) == is_annotated
         ]
         
-    return items
+    # 统一按时间线 (Timeline) 倒序
+    def get_time(item):
+        return item.get("published_at") or item.get("created_at") or ""
+
+    items.sort(key=get_time, reverse=True)
+    
+    # 分页下发
+    start = (page - 1) * limit
+    end = start + limit
+    paginated_items = items[start:end]
+    
+    return {
+        "items": paginated_items,
+        "total": len(items),
+        "page": page,
+        "limit": limit,
+        "has_more": end < len(items)
+    }
 
 
 @app.post("/api/v1/extract/quick")

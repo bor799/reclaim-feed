@@ -53,11 +53,17 @@ class Pipeline:
     # Stage 1: Fetch
     # ──────────────────────────────────────────
 
-    async def fetch(self) -> List[ContentItem]:
-        """并发抓取所有已配置信息源"""
-        print(f"📡 Fetch: {len(self._fetchers)} 个源")
+    async def fetch(self, source_name: Optional[str] = None) -> List[ContentItem]:
+        """并发抓取所有已配置信息源，或指定单个配置源"""
+        target_fetchers = self._fetchers
+        # filter by source name if provided. Assuming fetchers have .source attribute or similar.
+        # Actually base fetcher saves it as self.source
+        if source_name:
+            target_fetchers = [f for f in self._fetchers if getattr(f, 'source', None) and f.source.name == source_name]
 
-        tasks = [self._fetch_one(f) for f in self._fetchers]
+        print(f"📡 Fetch: {len(target_fetchers)} 个源")
+
+        tasks = [self._fetch_one(f) for f in target_fetchers]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         all_items = []
@@ -144,16 +150,16 @@ class Pipeline:
     # 主流程
     # ──────────────────────────────────────────
 
-    async def run(self, dry_run: bool = False) -> List[ContentItem]:
+    async def run(self, dry_run: bool = False, source_name: Optional[str] = None) -> List[ContentItem]:
         """
         执行完整 Pipeline
 
         Fetch → Filter → Analyze → Output
         """
-        print("🚀 100X Knowledge Agent Pipeline 启动\n")
+        print(f"🚀 100X Knowledge Agent Pipeline 启动 (Source: {source_name or 'All'})\n")
 
         # Stage 1
-        items = await self.fetch()
+        items = await self.fetch(source_name=source_name)
         if not items:
             print("\n📭 无新内容")
             return []

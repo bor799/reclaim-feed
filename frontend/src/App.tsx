@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
+import ImmersiveLayout from './components/ImmersiveLayout';
 import SourcesView from './views/SourcesView';
 import FeedView from './views/FeedView';
 import NotesView from './views/NotesView';
@@ -10,7 +10,7 @@ function App() {
     <AppProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Layout />}>
+          <Route path="/" element={<ImmersiveLayout />}>
             <Route index element={<Navigate to="/feed" replace />} />
             <Route path="sources" element={<SourcesView />} />
             <Route path="feed" element={<FeedView />} />

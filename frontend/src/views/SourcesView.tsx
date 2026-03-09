@@ -9,8 +9,8 @@ const SourcesView = () => {
     const [sources, setSources] = useState<Source[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
-    const [editForm, setEditForm] = useState<Partial<Source>>({
-        name: '', type: SourceType.RSS, url: '', enabled: true, status: SourceStatus.Active, category: ''
+    const [editForm, setEditForm] = useState<Partial<Source & { cron?: string }>>({
+        name: '', type: SourceType.RSS, url: '', enabled: true, status: SourceStatus.Active, category: '', cron: '0 */8 * * *'
     });
 
     useEffect(() => {
@@ -26,7 +26,6 @@ const SourcesView = () => {
         }
     };
 
-    // Filter sources based on search term
     const filteredSources = useMemo(() => {
         return filterBySearchTerm(sources, searchTerm);
     }, [searchTerm, sources]);
@@ -37,7 +36,7 @@ const SourcesView = () => {
             setEditForm(sources[index]);
         } else {
             setEditingIndex(null);
-            setEditForm({ name: '', type: SourceType.RSS, url: '', enabled: true, status: SourceStatus.Active, category: '' });
+            setEditForm({ name: '', type: SourceType.RSS, url: '', enabled: true, status: SourceStatus.Active, category: '', cron: '0 */8 * * *' });
         }
         setIsModalOpen(true);
     };
@@ -68,7 +67,7 @@ const SourcesView = () => {
     };
 
     return (
-        <div className="p-8 max-w-6xl mx-auto">
+        <div className="p-8 max-w-6xl mx-auto min-h-screen">
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-text mb-2 animate-fade-in">Sources</h1>
@@ -83,7 +82,7 @@ const SourcesView = () => {
                 </button>
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                 {/* Toolbar */}
                 <div className="p-4 border-b border-gray-100 flex gap-4">
                     <div className="relative flex-1 max-w-md">
@@ -91,12 +90,12 @@ const SourcesView = () => {
                         <input
                             type="text"
                             placeholder="Search sources..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white/50 backdrop-blur-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <button className="px-4 py-2 border border-gray-200 rounded-lg flex items-center gap-2 text-gray-600 hover:bg-gray-50 transition-colors">
+                    <button className="px-4 py-2 border border-secondary/20 rounded-lg flex items-center gap-2 text-text hover:bg-white/40 transition-colors">
                         <Filter size={18} />
                         Filter
                     </button>
@@ -106,10 +105,10 @@ const SourcesView = () => {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100 text-sm text-gray-500">
+                            <tr className="bg-white/40 border-b border-gray-100 text-sm text-gray-500">
                                 <th className="py-4 px-6 font-medium text-gray-500">Name</th>
                                 <th className="py-4 px-6 font-medium text-gray-500 w-24">Type</th>
-                                <th className="py-4 px-6 font-medium text-gray-500">URL</th>
+                                <th className="py-4 px-6 font-medium text-gray-500">URL & Cron</th>
                                 <th className="py-4 px-6 font-medium text-gray-500">Category</th>
                                 <th className="py-4 px-6 font-medium text-gray-500 w-32">Status</th>
                                 <th className="py-4 px-6 font-medium text-right">Actions</th>
@@ -117,14 +116,18 @@ const SourcesView = () => {
                         </thead>
                         <tbody>
                             {filteredSources.map((source: Source, index: number) => (
-                                <tr key={index} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
+                                <tr key={index} className="border-b border-gray-50 hover:bg-white/60 transition-colors group">
                                     <td className="py-4 px-6 font-medium text-gray-900">{source.name}</td>
                                     <td className="py-4 px-6">
                                         <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full font-medium">
                                             {source.type}
                                         </span>
                                     </td>
-                                    <td className="py-4 px-6 text-gray-500 text-sm truncate max-w-xs">{source.url}</td>
+                                    <td className="py-4 px-6 text-gray-500 text-sm">
+                                        <div className="truncate max-w-xs">{source.url}</div>
+                                        {/* @ts-expect-error mock cron */}
+                                        <div className="text-xs text-primary mt-1 font-mono">{source.cron || '0 */8 * * *'}</div>
+                                    </td>
                                     <td className="py-4 px-6">
                                         <span className="inline-block px-3 py-1 bg-purple-50 text-purple-700 text-sm rounded-full font-medium">
                                             {source.category || 'Uncategorized'}
@@ -158,9 +161,9 @@ const SourcesView = () => {
 
             {/* 编辑 Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-fade-in">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div className="fixed inset-0 bg-text/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white/80 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in">
+                        <div className="flex items-center justify-between p-6 border-b border-white/20">
                             <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900">
                                 {editingIndex !== null ? 'Edit Source' : 'Add Source'}
                             </h2>
@@ -176,7 +179,7 @@ const SourcesView = () => {
                                     type="text"
                                     value={editForm.name}
                                     onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white"
+                                    className="w-full px-4 py-2 border border-black/5 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white/50 backdrop-blur"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -185,7 +188,7 @@ const SourcesView = () => {
                                     <select
                                         value={editForm.type}
                                         onChange={e => setEditForm({ ...editForm, type: e.target.value as SourceType })}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white"
+                                        className="w-full px-4 py-2 border border-black/5 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white/50 backdrop-blur"
                                     >
                                         <option value="RSS">RSS</option>
                                         <option value="Twitter">Twitter</option>
@@ -198,7 +201,7 @@ const SourcesView = () => {
                                     <select
                                         value={editForm.enabled ? SourceStatus.Active : SourceStatus.Paused}
                                         onChange={e => setEditForm({ ...editForm, enabled: e.target.value === SourceStatus.Active as string })}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white"
+                                        className="w-full px-4 py-2 border border-black/5 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white/50 backdrop-blur"
                                     >
                                         <option value={SourceStatus.Active}>Active</option>
                                         <option value={SourceStatus.Paused}>Paused</option>
@@ -211,7 +214,7 @@ const SourcesView = () => {
                                     type="text"
                                     value={editForm.category || ''}
                                     onChange={e => setEditForm({ ...editForm, category: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white"
+                                    className="w-full px-4 py-2 border border-black/5 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white/50 backdrop-blur"
                                     placeholder="Enter a category or tag..."
                                 />
                             </div>
@@ -221,12 +224,22 @@ const SourcesView = () => {
                                     type="text"
                                     value={editForm.url || ''}
                                     onChange={e => setEditForm({ ...editForm, url: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white"
+                                    className="w-full px-4 py-2 border border-black/5 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white/50 backdrop-blur mb-4"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Cron Schedule</label>
+                                <input
+                                    type="text"
+                                    value={editForm.cron || ''}
+                                    onChange={e => setEditForm({ ...editForm, cron: e.target.value })}
+                                    className="w-full px-4 py-2 border border-black/5 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-white/50 backdrop-blur font-mono text-sm"
+                                    placeholder="e.g. 0 */8 * * * (Every 8 hours)"
                                 />
                             </div>
                         </div>
 
-                        <div className="p-6 border-t border-gray-100 bg-white flex justify-end gap-3">
+                        <div className="p-6 border-t border-white/20 bg-white/40 flex justify-end gap-3">
                             <button onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors font-medium">
                                 Cancel
                             </button>

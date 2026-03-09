@@ -14,8 +14,9 @@
 
 - **[新增] `GET /api/v1/user/stats` (用户数据看板 API)**
   - 返回当前用户的总处理笔记数 (`total_notes`)、总整理标签数 (`total_tags`)、加入天数 (`days_active`)、近期批注数 (`annotations_count`)。
-- **[修改] `GET /api/v1/feed`**
+- **[修改] `GET /api/v1/feed` (升级为 Unified Timeline API)**
   - **支持核心过滤参数**：必须支持传入 `is_annotated=boolean` (是否有批注/Markdown反馈) 按批注状态快速检索。
+  - **支持混合排序展示**：为了支撑前端"抖音式"全视口滑屏流，此接口需支持将原生的信息流数据 (Feeds) 与用户保存的笔记 (Notes) 数据进行底层的 `UNION` 操作，并统一按时间线 (Timeline) 倒序分页下发，使前端能在一个列表中同构渲染两种卡片体系。
 - **[新增] `POST /api/v1/extract/quick` (旁路加速萃取接口)**
   - 接受单个或一组 URL 字符串 `{"urls": ["http..."]}`。
   - 此接口绕过底层的定时计划 (CronJob)，**直接将其扔进** `Fetch -> Filter -> Analyze` 队列并立即执行解析返回。用于首页顶部快速 URL 解析条。
@@ -44,6 +45,7 @@
 - **[新增] `GET/PUT /api/v1/settings/environment`**
   - 设置 UI `locale` (中英文对照偏好)。
   - 设置 `local_workspace_path` (同步至本地电脑（如 Obsidian）的物理绝对路径映射)。
+  - 设置系统级默认的 `system_prompt` (大模型全局身份设定映射)。
 
 ## 3. DevOps 与部署调整
 - **语言/时区统一**：确保 Docker Container 强制设定 `TZ=Asia/Shanghai` 或 UTC 的规范化处理，防止前端 Timeline (根据日期归档) 出现乱序。

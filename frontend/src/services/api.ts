@@ -101,7 +101,7 @@ class ApiClient {
   }
 
   // 获取配置
-  async getSettings(): Promise<any> {
+  async getSettings(): Promise<unknown> {
     return this.request('/settings');
   }
 

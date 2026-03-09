@@ -57,6 +57,7 @@ class ContentItem(BaseModel):
     source: SourceType = SourceType.RSS
     source_detail: str = ""
     published_at: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     unique_id: str = ""
 
     # 质量评估（Filter 阶段写入）
@@ -157,6 +158,7 @@ class EnvironmentConfig(BaseModel):
     """环境设置"""
     locale: str = "zh"  # "zh" | "en"
     local_workspace_path: str = ""  # Obsidian 仓库的物理绝对路径
+    system_prompt: str = ""  # 大模型全局身份设定映射
 
 
 class UserStats(BaseModel):

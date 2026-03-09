@@ -12,65 +12,27 @@
 
 @layer base {
   body {
-    @apply bg-background text-text font-sans antialiased min-h-[100dvh] flex flex-col selection:bg-primary/20;
-    /* iOS Safari prevent bounce effect on main body */
-    overscroll-behavior-y: none;
-    -webkit-overflow-scrolling: touch;
-
-    /* macOS Font Smoothing for sharper text on external monitors */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* macOS-style Custom Scrollbar for Chrome on Desktop */
-  @media (pointer: fine) {
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.15);
-      border-radius: 4px;
-      border: 2px solid transparent;
-      background-clip: padding-box;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 0, 0, 0.3);
-    }
-
-    ::-webkit-scrollbar-corner {
-      background: transparent;
-    }
+    @apply bg-background text-text font-sans antialiased min-h-screen flex flex-col selection:bg-primary/20;
   }
 }
 
-@layer utilities {
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
+/* Let Chrome/Edge scrollbar look like Mac Native */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
 
-  .pt-safe {
-    padding-top: env(safe-area-inset-top);
-  }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-  .px-safe {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
 
-  .hide-scrollbar {
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
