@@ -58,8 +58,9 @@
    - 表头为：`Name`, `Type`, `URL & Cron`, `Category`, `Status`, `Actions`。
    - 左侧带有**多选按钮 (Checkbox)**，Actions 里支持所有链接的更新与删除操作。
 3. **新增来源悬浮框 (Add Source Modal)**:
-   - 点击右上角按钮唤出。表单字段必须包含：`Name`, `Type` (如 RSS 下拉), `Category (Tag)`, `URL (Optional)`。
+   - 点击右上角按钮唤出。表单字段必须包含：`Name`, `Type` (如 RSS 下拉), `Status` (默认 Active 下拉选项), `Category (Tag)`, `URL (Optional)`。
    - **关键设计：获取定时任务 (Cron Schedule)**：必带配置项（可选可不选），决定多久提取一次数据，确保能在后端顺利保存。
+   - **底部动作条 (Action Bar)**：包含明确的 `Cancel`（取消）与显眼的突出版 `Save Source`（保存源）按钮以闭环操作。
 
 ---
 
