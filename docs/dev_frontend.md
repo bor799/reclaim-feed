@@ -1,143 +1,90 @@
-# 炼器房 (Reclaim your feed) - 前端开发规范与执行文档
+# 100X Knowledge Agent: 前端架构与 UI/UX 详细设计开发指南
 
-**文档目标**：指导前端开发人员完成 `100X Knowledge Agent` (现名`炼器房`) 的前端架构落地与后续演进。此规范基于 React + Vite 实际技术栈，重构目标为在桌面端达到媲美 macOS 原生应用（如 Obsidian、Cursor、苹果备忘录）的极客质感，并在交互层引入抖音式的沉浸式全屏流。
+## 0. 目标与背景 (Context & Goals)
+本文档旨在为前端开发者及 AI 助手 (如 Cursor, Claude, Antigravity) 提供**高度结构化、像素级、体感级清晰**的开发指南。
+鉴于此前系统呈现的“前后端分离基本不可用、界面跳转失效、模块职责模糊”等痛点，且基于已确定的 6 张核心原型设计，我们将通过模块化拆解与精确的 UI 布局约定，直接指导每一个界面区域的开发与联调。不要上来就写代码，务必先深刻理解下列的业务流与设计审美。
 
-## 1. 核心设计与 macOS 桌面级专属优化 (Design Guidelines)
-
-视觉风格追求极致的现代简约、沉浸式、极客感。为了在桌面端（尤其 Mac 环境）提供极其丝滑的原生体验，必须在全局进行以下专属优化：
-
-### 1.1 ⌨️ 全局快捷键与键盘导航 (Keyboard Shortcuts)
-Mac 用户高度依赖键盘（Cmd ⌘ 键）。要求前端接入 `react-hotkeys-hook` 等库监听全局键盘事件：
-- **`Cmd + K`**：全局唤起命令面板 (Command Palette) 或搜索框，用于快速跳转模块或搜索 Note。
-- **`Cmd + S`**：在 `/notes` 的 Markdown 编辑器中，劫持默认的网页保存（`e.preventDefault()`），改为触发本地或远端笔记内容的 Save 动作。
-- **`Cmd + N`**：快速新建一条 Note 笔记。
-- **`J` / `K` 键遍历**：在 `/feed` 主信息流中，无鼠标沉浸操作，使用 `J` (下移) 和 `K` (上移) 快速高亮选中卡片，敲击 `Enter` 直接展开分屏面板查看详情。
-
-### 1.2 🖱️ Mac 专属滚动轴美化 (Custom Scrollbar)
-针对外接鼠标时出现的丑陋 Chrome 实心滚动条，需在 `index.css` 重写以贴合 Apple HIG 审查标准：
-```css
-/* 让 Chrome/Edge 的滚动条看起来像 Mac 原生 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
-```
-
-### 1.3 🖥️ 桌面端 PWA 安装体验 (Progressive Web App)
-让 Web App 在 Mac 的 Launchpad 和 Dock 栏独立驻留：
-- `manifest.json`：设置 `display: "standalone"`，并提供苹果标准规格的大圆角矩形 Icon。
-- **深色模式边框融合**：配置 `<meta name="theme-color" content="#ffffff">`（深色模式下自动切换为深色），使独立 App 在打开时顶部标题栏的颜色和页面背景无缝融合，消除浏览器界限感。
-
-### 1.4 🔤 字体抗锯齿优化 (Font Smoothing)
-确保 `Inter` 或 `PingFang SC` 等高级字体在 Mac 上渲染得不"发虚"、不"显胖"，保持纤细锐利：
-```css
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-```
-
-### 1.5 🪟 毛玻璃与沉浸式效果 (Glassmorphism)
-Chrome 对 `backdrop-filter: blur()` 的支持已极其完善。
-在弹窗（Model）、下拉菜单（Dropdown）、底栏/侧边悬浮组件、全局搜索面板处，强烈禁止使用死板纯色。应使用诸如 `bg-white/80 backdrop-blur-md`（深色态对应换色）的特效，让底层视面的图文等信息呈现"毛玻璃"透出感。
+**核心体验追求 (The Vibe)**：流畅、现代、沉浸式、极客感 (Geeky but Elegant)。我们要贴合 macOS 的质感体验，深度契合高知用户的自定义工作流与国内外 AI 大模型厂商的复杂配置环境。
 
 ---
 
-## 2. 三大核心界面架构 (Three Core Views)
+## 1. 全局体验体系设计原则与审美 (Global UX & Aesthetic Principles)
 
-整体交互从传统的左右侧边栏模式，激进重构为 **移动优先 + 沉浸式滑动** 的全屏交互框架。
-
-### 界面一：主界面 (Feed & Notes 信息流) 📱
-*像刷抖音一样，全视口沉浸式摄入经过 AI 高度浓缩的知识洞察。*
-
-1. **信息流形态 (TikTok 模式)**
-   - 全屏留白渲染。按时间线顺滑归类，且 Feed (输入流) 与 Note (沉淀的笔记) 同源混合展示。
-   - 上下滑动查收知识，使用 `J` / `K` 键盘游游走。
-   - 卡片本身仅展示核心 `Key Insights`，左上角含悬浮按钮 (Floating Menu)。
-   - **快速提取**：主界面或悬浮窗支持直接输入/粘贴外部的 URL 地址，传给后端秒级进行抓取解析进信息流。
-2. **左滑/展开动作 (具体信息与批注)**
-   - 对单条信息左滑，或者敲击 `Enter`：从侧边（或分屏）丝滑滑出原文结构化解析与右侧的 Notes Markdown 批注版。
-3. **全局导航悬浮收敛**
-   - 不再放置常驻厚重的导航栏。主界面只有 Feed 内容流。
-   - **左上角**：悬浮按钮展开左侧（对应进入内容详情/菜单集）。
-   - **右下角入口**：悬浮提供进入界面二与界面三的入口。
-
-### 界面二：Prompt 与信息源配置管道 (Sources & Prompts) 🔧
-*控制知识漏斗的核心中枢。*
-
-1. **信息源配置 (Ingestion)**
-   - 管理你所有的订阅源 (RSS, Twitter, YouTube Playlist)。
-   - **高阶设定（与后端协同要求）**：每类信息源、甚至单个信息源，可单独设定独立抓取频率与 Cron 同步策略（例如："RSS 高频源"每 4 小时跑一次；"某推主"每 24 小时跑一次），实现定向精度。
-2. **提取流提示词配置 (Pipeline Prompts)**
-   - 此处外挂维护打分过滤标准 (Score Filtering)、结构格式化模板 (Extraction Structure)，实现所见即所得的配置即代码，修改即通过 API 覆盖后端的 markdown prompt。
-
-### 界面三：系统底层设置 (Settings) ⚙️
-*LLM大脑引擎与物理环境配置区。*
-
-1. **Bot / 大模型 API 部署**
-   - 图形化展示、增加、管理后端 AI 工作引擎厂商（允许配置 Anthropic Claude, OpenAI, DeepSeek 或本地 Ollama 模型）。维护其对应的 Base URL 与 Tokens 密钥。
-2. **通用与语种生态 (Language & Prefs)**
-   - 前台 UI 语种（简中/En）设定。
-   - 输出/通知管道配置选项（如 Telegram/飞书 Webhook 密钥填报区）。
+*   **玻璃拟物与 macOS 质感 (Glassmorphism)**: 抛弃死板的纯色块。大量运用背景毛玻璃 (`backdrop-blur-md/lg`)、半透明遮罩 (`bg-white/10 dark:bg-black/40`) 与极细的 1px 边框透视，营造悬浮感。
+*   **抽屉与空间折叠 (Spatial Navigation)**: 坚决抵制传统呆板的整页跳转刷新。应用内大量使用滑动窗口 (Sliding Window)、侧边折叠抽屉、右侧滑出浮现面板，保持用户的“阅读上下文连贯性”。
+*   **无鼠化与极客按键 (Keyboard-First Flow)**: 深入骨髓的极客体感。必须内置 `J`/`K` 上下切换卡片焦点，`Cmd+K` 全局唤出命令/搜索面板，`Enter` 展开详情，`Cmd+S` 静默保存。
+*   **微排版与留白 (Micro-typography)**: 拒绝拥挤。利用大面积负空间引导视线，字重对比（Headline vs Description）必须明显，使用 Inter/SF Pro 等非系统默认衬线/无衬线高品质字体。
 
 ---
 
-## 3. UI 线框逻辑图 (Wireframe Logic Map)
+## 2. 核心四大界面模块拆解与精准布局 (Core Interfaces Detailed Layout)
 
-```text
-======================= 1. 主界面 (默认常态) ==========================
-[☰左上悬浮菜单]                                            [输入/粘贴链接]
- 
-             📅 今天 / Today
-          +----------------------------------------------+
-          | [高分 Feed] 文章标题...                      |
-          | - ⚡ 这里是 AI 萃取的核心金句/水下洞见 1        |
-          | - ⚡ ...                                     |
-          +----------------------------------------------+
-                            
-          +----------------------------------------------+
-          | [📝 Note] 我们昨天的复盘 ...                 |
-          | ...                                          |
-          +----------------------------------------------+
-             (像 Tiktok 一样深邃滚动的流，配合 J/K 快捷键)
+请开发/AI在构建组件时，严格按照以下 4 个模块逐步推进。所有模糊的交互地带已在此彻底澄清。
 
-                                           [右下悬浮：🔧漏斗 / ⚙️设置]
-========================================================================
+### 模块一：主信息流与聚合工作区 (Feed & Notes Workspace)
+这是用户每天停留最久的核心消费场。它不是简单的列表，而是极具呼吸感的信息工作台。
 
-===================== 2. 输入 URL / 看详见 / 审阅 Note ==================
- (由主界面回车或左滑触发展开)
- +-------------------------------+-------------------------------------+
- | [← 返回信息流]                  |                  [ Cmd+S 快捷保存 ]  |
- |                               |                                     |
- | [ 提取原文卡片区 ]              | [ Markdown 笔槽 ]                   |
- | - 分析摘要                      | # 我的随笔                           |
- | - 原始外链                      | 补充说明...                          |
- | - 等...                        | - 待办事项...                        |
- +-------------------------------+-------------------------------------+
+**【整体布局视角】**
+采用经典的 **“三段式弹性布局” (Left Menu - Center Feed - Right Peek Panel)**。
+1. **左侧导航滑出栏 (Left Sidebar & Folders)**:
+   - **视觉**: 默认可收缩为极其细窄的图标列 (Icon strip)，悬浮或点击后展开 (Slide-out)。
+   - **功能与按钮**: 顶部包含"全局检索(Search)"；中间为"系统导航"；下半部为"信息分类树 (Tag Clouds)"与"历史收藏夹 (Bookmarks)"。点击左侧任意项，只是筛选中间的中心流数据，**不导致页面跳转**。
+2. **中间主视图 (Center Infinite Feed)**:
+   - **顶部控制台 (Top Bar)**: 左侧为日期漏斗（时间戳筛选）；中间为极其吸睛的 **快速抽取框 (Quick Extract Input)**，形似 Mac 的 Spotlight 框，填入 URL `Enter` 即可送给后端；右侧为“数据导出/一键外呼”触发按钮。
+   - **卡片核心交互 (Card Interactions)**: 卡片内部右上角有隐性触发的悬浮操作组，Hover 时展现「保存笔记 (Save)」「打标签 (Tag)」「共享 (Share)」。
+   - **重心/引力场排序 (Gravity Sorting - 核心体感)**: 信息流极具动态。未读消息具有微弱辉光(Glow)与高亮色带，绝对**置顶展现**！当卡片被阅读 (滚动驻留或点击展开) 后，触发平滑的过渡动画下沉，视觉呈现略微暗化 (Opacity: 0.75)。
+3. **右侧洞察抽屉 (Right Insight Peek - 解决原"按钮不清晰")**:
+   - 当点击某条中心 Feed 的“深度分析”时，不要跳转！而是从屏幕最右侧丝滑地滑出一个抽屉面板。
+   - **详情界面**: 展示 AI 根据 Prompt 萃取出的“水下信息”、“金句结构”与 Markdown 富文本。底部配有 `Add to Notes` 按钮，将此条数据导入个人的二创编辑器中。
 
-===================== 3. 配置管道 (漏斗与控制台) =========================
- (悬浮菜单进入)
- [ + 添加新源 ]      |当前 Active Prompts: V2 - Custom Profile|
- +-------------------------------------------------------------------+
- | 来源名        类型      定时抽取频率 (Cron)        状态              |
- | [Karpathy]   [RSS]    [ 每 8 小时 ⌄ ]            [ Active ✓ ]      |
- | [新闻摘要]    [Twitter] [ 每 24 小时 ⌄]            [ Paused ⏸ ]      |
- +-------------------------------------------------------------------+
-```
+---
 
-## 4. 后端对齐与开发验收 CheckList (与协作方确认)
+### 模块二与三：Prompt 设定与信息矩阵管理一体化 (Integrated Prompt & Source Matrix)
+**⚠️ 关键认知纠偏**：以前模块 2 (Prompt) 和模块 3 (Sources) 是割裂的。现在的核心逻辑是——“**先有规则(Prompt)，后有数据矩阵(Sources Matrix)**”。我们将两者糅合进一个高度具备审美感的工作流中。
 
-1. [ ] **支持单源定时参数**：后端需支持每个 Source 在 DB 或 Config 中携带有各自的抓取频率/时间参数，并调度之。
-2. [ ] **快速抽取 Endpoint**：需后端提供一个全新的 URL 即时解析入库接口（`POST /api/v1/extract/quick { url: string }`）。
-3. [ ] **混合渲染排序接口**：基于日期的 `/feed` 接口除了承载 `Sources` 抓取的，也要能混排展示 `Notes` 表的数据（Timeline 日志式排序）。
-4. [ ] **设置中心 API 读写**：增加配置读取和修改接口以支撑前端界面动态更改大模型 `provider` 以及修改系统级 `system_prompt` 等。
+**【布局走向：左右/上下切分的分步工作台 (Stepper/Split 工作台)】**
+不再是传统的列表表单页，而是一个具有“炼丹”极客感的操作台。
+
+1. **左半屏 / 步骤一：Pro (Prompt) 规则定义区**
+   - 这里存放系统的大脑。界面采用类似 VS Code/Cursor 的沉浸式多 Tab 编辑器。
+   - **Tab页签**: `[筛选标准 (Scoring)]`、`[萃取要求 (Extraction)]`、`[输出格式 (Format)]`。
+   - **编辑器体感**: 纯粹的 Markdown 沉浸式编辑，支持语法高亮。底部具有 `Version Default/A/B` 控制条。
+2. **右半屏 / 步骤二：信息矩阵管理底座 (Source Data Matrix)**
+   - 当左侧配好任意一套 Prompt 后，右侧展现“矩阵卡片组”或“高配数据表(Data Grid)”。
+   - **视觉与配置**: 这些源 (Twitter, RSS, YouTube) 就像一个个外设模块插在右边。
+   - **卡片/行级按钮**: 每一条来源必须清晰包含：开关 (Toggle Switch，控制激活态)，轮询状态指示灯 (Cron Light，绿色闪烁表示监听中)，以及快速唤起的 `Add Source Modal`。
+   - **协同体感**: 左侧改动规则，右侧可以针对某个源进行 Test Run (试跑)，展现极具设计感的代码态测试输出弹窗。
+
+---
+
+### 模块四：系统级设置与 API 开发者控制台 (Settings & API Dev Hub)
+这是掌控分发网络与大模型引擎配置的核心重地。我们需要极度专业、详尽、具备开发者亲和力。
+
+**【整体布局】**
+左侧为模块导航 Tab (`引擎配置`, `分发机器人`, `API 开发者选项`)，右侧为具体的区块表单阵列，借鉴 Cloudflare / Vercel 管理后台的块状阴影 (Card Shadow) 极简风格。
+
+1. **大模型引擎阵列 (LLM Providers Setup)**:
+   - 必须涵盖并存的国内外国双轨模型卡片（OpenAI, Claude, 智谱, Moonshot Kimi, DeepSeek）。
+   - **核心特定场景支持 - “科学上网 Proxy” 连通配置**: 针对通过 API 国内直连不通的痛点！在界面最显著位置或高级选项中，直接提供 `Proxy Address:Port (e.g. 127.0.0.1:7890)` 的配置输入框。加入一个极具爽感的 **"Test Connection" 闪电测速按钮**，点击后出现 ping 延迟指示，给足反馈。
+2. **分发通路管控 (Bot Network Setup)**:
+   - 这是产出端。配置 `Telegram Group Token/ChatID` 与 `Feishu Webhook` 的表单卡片。打通与用户的最后几公里。
+3. **API 开发者中心 (API Developer Hub - 流畅体感打磨)**:
+   - 对于希望利用本系统进行二次开发（如开发自有插件、跨工具调用）的人：
+   - 在本配置区底端设立专属区。不仅是抛出一个 Token，必须具备**自带格式化的高亮代码块（cURL Snippets）**，直观演示如何调取系统的核心接口 `/api/v1/extract/quick` 等等。
+   - **体感细节**: 代码块右上角的一键拷贝(Copy)，点击后显示绿色的 "Copied!" 提示。配备实时的调用 Log 监控滚动小窗，呈现系统如何执行用户的请求流水过程。
+
+---
+
+## 3. 前后端联调与接口契约 (API Contracts Reference)
+
+- **核心信息流**: `GET /api/v1/feed`、`PUT /api/v1/feed/{id}/read` (承载界面一的已读引力下沉体感)。
+- **规则矩阵保存**: `PUT /api/v1/prompts/{stage}` 与 `POST /api/v1/sources`。
+- **配置与网络连通**: 涵盖模型密钥的 `PUT /api/v1/settings/providers` (必须在此接口 payload 中约定扩展 `proxy_url` 字段)。
+
+## 4. 前端开发流水线执行步骤 (Execution Steps)
+
+1. **统一审美基调**: 构建好 Tailwind CSS 色阶（深色背景推荐 `zinc-900` / `stone-900`，配上适当毛玻璃滤镜层）。确定好字体的 `font-sans` 全局映射。
+2. **搭建立体框架 (Layout Container)**: 实现左侧的 Collapsible Sidebar，确保它能顺畅的响应拉伸。中央留出固定尺寸与滚动条隐去的区域。
+3. **先攻模块二＆三一体化视图**: 结合 Markdown 编辑器组件，搭建左右/上下切分的界面。重点雕琢右侧信息矩阵卡片的启停状态动效。
+4. **精细雕琢模块一 (Feed Fluid)**: 在此阶段接入真实数据。实现 `is_read` 的引力衰减排序效果（必须带有 Transition 让卡片滑出当前视区）。
+5. **打磨系统控制台与开发者体验**: 最后搭建模块四，务必实现 Proxy 连通性的测速反馈动效与 API 示例区的极简排版呈现。
