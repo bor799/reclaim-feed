@@ -72,6 +72,8 @@ class ContentItem(BaseModel):
 
     # 消费状态
     status: ItemStatus = ItemStatus.UNREAD
+    is_read: bool = False
+    is_favorited: bool = False
     reread_worthy: bool = False
     tags: List[str] = Field(default_factory=list)
     category: str = ""
@@ -144,6 +146,7 @@ class ProviderConfig(BaseModel):
     name: str
     api_key: str = ""  # 入库时加密/混淆存放
     api_base: str = ""
+    proxy_url: Optional[str] = None  # 代理服务器地址，如 socks5://127.0.0.1:1080
     enabled: bool = True
 
 
@@ -151,6 +154,7 @@ class BotConfig(BaseModel):
     """推送通道配置"""
     telegram_bot_token: str = ""
     telegram_chat_id: str = ""
+    telegram_proxy_url: Optional[str] = None
     feishu_webhook_url: str = ""
 
 
@@ -175,6 +179,39 @@ class PromptVersion(BaseModel):
     content: str = ""
     updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     is_active: bool = True
+
+
+# ──────────────────────────────────────────────
+# API 请求模型
+# ──────────────────────────────────────────────
+
+class FeedUpdateRequest(BaseModel):
+    """单条 Feed 卡片更新请求"""
+    content: Optional[str] = None
+    tags: Optional[List[str]] = None
+    annotation: Optional[str] = None
+    category: Optional[str] = None
+
+
+class SourceBulkRequest(BaseModel):
+    """批量 Source 操作请求"""
+    ids: List[int]  # Source 索引列表
+
+
+class SourceBulkStatusRequest(BaseModel):
+    """批量 Source 状态更新请求"""
+    ids: List[int]
+    enabled: bool
+
+
+class PromptVersionRestoreRequest(BaseModel):
+    """恢复指定版本 Prompt 请求"""
+    version: int
+
+
+class TestConnectionRequest(BaseModel):
+    """连通性测试请求"""
+    provider_name: Optional[str] = None  # 不传则测试当前 Active Engine
 
 
 class AppConfig(BaseModel):
