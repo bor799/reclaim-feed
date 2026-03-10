@@ -1,13 +1,41 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #0D9488;
-  --color-secondary: #14B8A6;
+  --color-primary: #2563EB;
+  --color-secondary: #60A5FA;
   --color-cta: #F97316;
-  --color-background: #F0FDFA;
-  --color-text: #134E4A;
+  --color-background: #EFF6FF;
+  --color-text: #1E3A8A;
 
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* 4px Base Spacing System */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+
+  /* Mobile-First Typography System */
+  --text-xs: 0.75rem;
+  /* 12px */
+  --text-sm: 0.875rem;
+  /* 14px */
+  --text-base: 1rem;
+  /* 16px */
+  --text-lg: 1.125rem;
+  /* 18px */
+  --text-xl: 1.25rem;
+  /* 20px */
+  --text-2xl: 1.5rem;
+  /* 24px */
+  --text-3xl: 1.875rem;
+  /* 30px */
 }
 
 @layer base {
@@ -35,4 +63,74 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile-First Optimizations */
+
+/* Safe Area Support for Notched Devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Hide scrollbar for mobile */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent rubber-banding on iOS */
+.overscroll-none {
+  overscroll-behavior: none;
+}
+
+/* Touch-friendly tap targets */
+.min-touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Responsive spacing utilities */
+.p-responsive {
+  padding: var(--spacing-4);
+}
+
+@media (min-width: 768px) {
+  .p-responsive {
+    padding: var(--spacing-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .p-responsive {
+    padding: var(--spacing-8);
+  }
+}
+
+/* Glassmorphism utilities (consistent with existing design) */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Bottom navigation specific styles */
+.bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+  padding-top: 8px;
 }

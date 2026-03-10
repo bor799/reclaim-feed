@@ -61,7 +61,9 @@ fi
 
 # 加载环境变量
 echo -e "${GREEN}📋 加载环境变量...${NC}"
-export $(grep -v '^#' "$CONFIG_DIR/.env" | xargs)
+set -a
+source "$CONFIG_DIR/.env"
+set +a
 
 # 设置配置目录
 export AGENT_CONFIG_PATH="$CONFIG_DIR/config.yaml"

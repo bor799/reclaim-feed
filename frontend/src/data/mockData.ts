@@ -37,7 +37,7 @@ export const mockSources: Source[] = [
 
 export const mockFeedItems: FeedItem[] = [
   {
-    id: 1,
+    id: '1',
     title: 'The Unreasonable Effectiveness of Recurrent Neural Networks',
     source: 'Karpathy Blog',
     score: 9.5,
@@ -51,7 +51,7 @@ export const mockFeedItems: FeedItem[] = [
     tags: ['AI', 'Deep Learning', 'RNN']
   },
   {
-    id: 2,
+    id: '2',
     title: 'Why we should stop using "technical debt"',
     source: 'Hacker News Top',
     score: 8.8,

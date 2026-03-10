@@ -51,12 +51,12 @@
 
 ### 3. 四层可配置 Prompt
 
-| 层次 | 配置文件 | 作用 |
-|------|---------|------|
-| **① 信息源** | `config/sources.yaml` | 订阅 RSS、Twitter 关注列表、B站 UP 主等 |
-| **② 过滤规则**| `config/prompts/scoring.md` | 用自然语言定义你的偏好与评分阈值（替代硬编码查词） |
-| **③ 深度萃取**| `config/prompts/extraction.md` | 定义你想要的结构化输出（如：水下信息、案例、金句） |
-| **④ 输出格式**| `config/prompts/obsidian_format.md`| Markdown 与 Dataview Frontmatter 模板 / IM 卡片样式 |
+| 层次         | 配置文件                                | 作用                                           |
+| ---------- | ----------------------------------- | -------------------------------------------- |
+| **① 信息源**  | `config/sources.yaml`               | 订阅 RSS、Twitter 关注列表、YouTube等                 |
+| **② 过滤规则** | `config/prompts/scoring.md`         | 用自然语言定义你的偏好与评分阈值（替代硬编码查词）                    |
+| **③ 深度萃取** | `config/prompts/extraction.md`      | 定义你想要的结构化输出（如：水下信息、案例、金句）                    |
+| **④ 输出格式** | `config/prompts/obsidian_format.md` | Markdown 与 Dataview Frontmatter 模板 / IM 卡片样式 |
 
 ---
 
@@ -88,39 +88,57 @@
 
 ---
 
-## 产品演进状态与阶段性成果 (Current Progress)
+## 系统设计与核心模块 (System Architecture & Modules)
 
-本项目目前已经完成了**单机全栈重构**，并针对 SaaS/多租户形态和多端体验做了深度适配验证。以下是当前已就绪的成果：
+本项目基于前后端分离架构，旨在提供高性能、沉浸式、极客感 (Geeky but Elegant) 的前端消费体验，以及高兼容、稳健调度的后台支撑网络。
 
-### 1. 核心架构重做 (API + Agent Scheduler)
-- **FastAPI 改造**：移除了原有的硬编码循环脚本，将 `Fetch → Filter → Analyze → Output` 链路完全 API 化。
-- **APScheduler 挂载**：容器启动即运行后台守护时钟，默认 `6 小时` 拉取萃取一次，完全无人值守。
-- **多租户预留 (Auth Plan A)**：所有的 Router 函数已通过 `user_id = Depends(get_current_user)` 接管，当前 MVP 阶段利用 `AUTH_ENABLED=False` 放行，可随时接入真实的 JWT 校验体系。
+### 1. 后端引擎 (Backend Engine: Python + FastAPI)
+后端的本质是一个稳定的 `Fetch → Filter → Analyze → Output` 管道，并在此之上完全实现 API 化与模块化：
+- **数据管线与分析调度**: 各信息源可根据其 `cron_interval` 独立设置抓取频次并挂载调度，并提供 `POST /api/v1/extract/quick` 旁路萃取接口应对突发手动解析需求。
+- **统一时间线 API (Unified Timeline API)**: 深度聚合原生 Feeds 和用户批注 Notes，基于底层 SQL `UNION` 倒序混合排列，实现针对未读状态的强制置顶 (Pinned) 与已读状态的引力衰减下沉 (Gravity Sorting)。
+- **多租户数据底座 (Multi-Tenant Ready)**: 所有资源响应依赖基于全局拦截器 API 的 `user_id` 外键隔离。
+- **配置与规则全面释放**: 原僵化的 Markdown 规则与资源转换为 CRUD，包含四大阶段 `Prompts` API 控制、`Sources` 管理配置与 Cron 调度、以及可热插拔的模型服务商 (AI Providers) 与机器人分发接驳 (Bots) 设置等接口模块化升级。
 
-### 2. 前端 3 大核心模块落地 (Frontend MVP)
-- **`/feed` (信息流)**：瀑布流卡片展示提炼后的 `Key Insights`，附带打分与来源标签；支持一键"收藏" (Bookmark)。
-- **`/notes` (笔记区)**：创新性的"懒人收纳联动"：在 Feed 点收藏，自动携带洞察带参跳入 Notes 生成草稿；支持 Markdown 沉浸批注。
-- **`/sources` (配置台)**：可视化管理知识漏斗导入层（RSS、Twitter 等订阅源）。
+### 2. 前端交互 (Frontend UI/UX: React + Vite + Tailwind CSS)
+彻底摈弃传统生硬跨页刷新，采用极致的"玻璃拟物化与 macOS 质感 (Glassmorphism)"：
+- **键盘极客流优先 (Keyboard-First Flow)**：全局注入 `Cmd+K` 统领命令与搜索面板，并针对重度阅读引入 `J`/`K` 辅以 `Enter` 实现上下穿梭，结合 `Cmd+S` 无缝沉浸保存笔记。
+- **模块一：统一信息流 & 工作区 (Feed & Notes Workspace)**：整合左侧聚合流与右侧/全屏滑动展开窗口，内置"顶部链接一件提取"与精细化动态过滤区，卡片带有 Edit/Like/Tag 等微操作。
+- **模块二：消息源矩阵与 Prompt 体系管理**：带有全屏视界 Markdown 沉浸编辑用于改写萃取 Prompt，配合带滑窗的 RSS 列表以悬浮弹窗提供精准管理。
+- **模块三：原生级偏好面板 (Settings)**：提供大面积模糊虚焦质感面板设置 API Key / Base URL 与测速连通性等。
 
-### 3. Apple 生态极致跨端体验 (iOS & macOS Optimization)
-- **iOS 移动端优化**：适配 iPhone 刘海、灵动岛安全区 (`env(safe-area-inset)`)；屏蔽 Safari 原生橡皮筋回弹 (`overscroll-behavior-y: none`)；引入 `Bottom Action Bar` (底部触控原生导航)；支持 PWA 隐去地址栏式"安装到主屏"。
-- **macOS (Chrome) 桌面级打磨**：
-  - **Power-user 热键**：注入 `Cmd + K` 全局统领/搜索；Feed 页支持 `J` / `K` 上下文无鼠标穿梭并支持 `Enter` 即时查看原文；Notes 页支持 `Cmd + S` 劫持静默保存。
-  - **苹果视觉**：全局开启字体锐利化平滑 (`-webkit-font-smoothing`)，改写 Chrome 默认宽大滚动条为苹果同款的细半透明毛玻璃 Overlay 滚动条。
+---
+
+## 阶段性成果与已实现功能 (Current Progress & Features)
+
+本项目目前已经完成了**单机全栈改造**，功能模块落地成果如下：
+
+1. **后端核心 API 链路重构与测试 (Backend Engine)**
+   - 彻底将系统所有功能行为升级为稳健的 FastAPI API，并打通并新增用户统计大盘、源信息参数设置、系统级环境控制以及阅读标记 (is_read / Bookmark)。
+   - 后端逻辑全面通过 `pytest` 完成自动化集成测试 (Integration Tests)，在多租户底层结构与运行性能上取得了保障。
+
+2. **前端与后端接口全链路对接 (Full-Stack API Integration)**
+   - 前端数据已全面脱离 Mock 和 LocalStorage，全面接管至 FastAPI 的真实接口回传 (`/api/v1/feed`, `/api/v1/sources` 等)。
+   - 实现了本地测试环境 (`local-test-env`)，支持前后端服务的一键启停。
+
+3. **核心 UI/UX 设计模块落地 (Frontend MVP Design Modules)**
+   - **沉浸式聚合信息流 (`ImmersiveLayout`)**：顶栏原生支持 URL 链接"快速提取"，支持通过卡片的动态引力排序和筛选状态无刷新重塑前端瀑布流。
+   - **Prompt 管理控制台 (`PromptsView`)**：带有三段式 Tab 的全屏视界 Markdown 沉浸编辑器，用于在线改写筛选、萃取与分发的 Prompt 版本控制。
+   - **信息源导控矩阵 (`SourcesView`)**：带有跟随滚动的玻璃态折叠 Header 布局与 RSS 列表，并可以在前端无缝编写和调度 Cron 配置参数。
+   - **原生级系统偏好面板 (`SettingsView`)**：打通 UI 界面的模型服务商 (Providers) 配置、系统代理环境 (Proxy)、前端 API 联通性测试与分发 Bots 填报。
+
+4. **Apple 级别生态全沉浸视觉包容 (Apple Ecosystem Optimization)**
+   - **全面跨端 PWA 适配**：对于移动端提供完备 Service Worker 及 Web Manifest 方案，iOS Safari 特别修缮原生防打断(`overscroll-behavior-y`)与底部原生导航(Bottom Action Bar)并可零妥协“安装到主屏 (`Add to Home Screen`)”。
+   - **macOS 机能视觉化打磨**：引入深海静蓝 (`Blue-600`) 的系统点缀色，配合 `backdrop-blur-md/lg` 毛玻璃滤镜，以及最高级的全局 macOS 全平滑字体渲染 (`-webkit-font-smoothing: antialiased`)。
 
 ---
 
 ## 遗留事项与未来探索想法 (Backlog & Ideas)
 
-当前系统已经能在云端 Docker 稳定跑送，但要达到"无痛且高度自定义"的最终形态，仍有以下几个迭代重点放在了接下来的周期中：
+当前系统前端交互与核心引擎已经完备互通并在云端 Docker 稳定跑送。为了达到最终形态，后续迭代重点为：
 
-1. **前后端接口全链路对接**
-   - 当前前端数据以 Mock 和 LocalStorage 为主做概念展示，需全面接管至 FastAPI 的真实接口回传。
-2. **构建 Settings (设置中心) 网页管理能力**
-   - 目前 API Key 与 RSS 数据仍需深入 `backend/config/config.yaml` 手动填写。需打通 UI 界面的模型服务商 (Providers) 配置与 `Prompt` 热更新功能。
-3. **引入 Markdown 所见即所得的高级解析器**
+1. **引入 Markdown 所见即所得的高级解析器**
    - 当前的 `/notes` 采用简单的 `react-markdown` 纯渲染。未来计划接入 `Tailwind Typography` 和语法高亮支持，并强化 `#标签` 正则自解析自动归档等高级动作。
-4. **Agent MCP 能力外放**
+2. **Agent MCP 能力外放与进一步适配**
    - 为后续的 Agent 化工作流补充标准的协议暴露，允许其它 Agent 主动调用该系统插入某项文章的分析请求（旁路请求：`POST /api/v1/extract/quick`）。
 
 ---

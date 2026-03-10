@@ -11,8 +11,8 @@ interface AppContextType {
   // 收藏的 Feed 项（会自动成为笔记）
   bookmarkedItems: FeedItem[];
   addBookmark: (item: FeedItem) => void;
-  removeBookmark: (itemId: number) => void;
-  isBookmarked: (itemId: number) => boolean;
+  removeBookmark: (itemId: string) => void;
+  isBookmarked: (itemId: string) => boolean;
 
   // 笔记（包含收藏的 Feed + 手动创建的笔记）
   notes: Note[];
@@ -131,18 +131,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         content: `
 # ${item.title}
 
-**来源**: ${item.source}
-**评分**: ${item.score}
-**时间**: ${item.timestamp}
+**来源**: ${item.source || (item as any).source_detail}
+**评分**: ${item.score || item.quality_score || item.analysis_score || 0}
+**时间**: ${item.timestamp || item.published_at || item.created_at || "Unknown"}
 
 ## 摘要
-${item.summary}
+${item.summary || item.extraction?.summary || item.content?.substring(0, 200) || ""}
 
 ## 关键洞察
-${item.keyInsights?.map(insight => `- ${insight}`).join('\n') || ''}
+${(item.keyInsights || item.key_insights || item.extraction?.key_insights || []).map((insight: string) => `- ${insight}`).join('\n')}
 
 ## 标签
-${item.tags?.map(tag => `#${tag}`).join(' ') || ''}
+${item.tags?.map((tag: string) => `#${tag}`).join(' ') || ''}
         `.trim(),
         isFromFeed: true,
         feedItemId: item.id
@@ -153,7 +153,7 @@ ${item.tags?.map(tag => `#${tag}`).join(' ') || ''}
   };
 
   // 移除收藏
-  const removeBookmark = (itemId: number) => {
+  const removeBookmark = (itemId: string) => {
     setBookmarkedItems(prev => prev.filter(item => item.id !== itemId));
 
     // 同时删除对应的笔记
@@ -161,7 +161,7 @@ ${item.tags?.map(tag => `#${tag}`).join(' ') || ''}
   };
 
   // 检查是否已收藏
-  const isBookmarked = (itemId: number): boolean => {
+  const isBookmarked = (itemId: string): boolean => {
     return bookmarkedItems.some(item => item.id === itemId);
   };
 

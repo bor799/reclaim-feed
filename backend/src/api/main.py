@@ -10,7 +10,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from ..models import AppConfig, ContentItem, ProviderConfig, BotConfig, EnvironmentConfig
+from ..models import (
+    AppConfig, ContentItem, ProviderConfig, BotConfig, EnvironmentConfig,
+    FeedUpdateRequest, SourceBulkRequest, SourceBulkStatusRequest, 
+    PromptVersionRestoreRequest, TestConnectionRequest
+)
 from ..pipeline import Pipeline
 from ..outputs.store import ItemStore
 from ..config import load_config
@@ -19,9 +23,13 @@ from ..utils.prompt_manager import get_prompt, update_prompt, get_prompt_history
 import json
 import os
 import logging
+import time
+import httpx
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi import Query
+from fastapi.responses import Response
 
 logger = logging.getLogger(__name__)
 
@@ -158,35 +166,43 @@ async def get_user_stats(user_id: str = Depends(get_current_user)):
 async def get_feed(
     page: int = 1,
     limit: int = 50,
-    date: str = None, 
+    search_query: Optional[str] = None,
+    tags: Optional[List[str]] = Query(default=None),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    date: Optional[str] = None, 
+    is_favorited: Optional[bool] = None,
+    is_read: Optional[bool] = None,
     is_annotated: Optional[bool] = None,
     user_id: str = Depends(get_current_user)
 ):
-    """[MODIFIED] 升级为 Unified Timeline API，支持混合时间线倒序与分页下发"""
+    """[MODIFIED] 升级为 Unified Timeline API，支持多重过滤与智能排序"""
     store = ItemStore(_config)
     
-    if date:
-        items = store.get_by_date(date)
-    else:
-        items = store.get_all()
+    # 1. 高级搜索与过滤
+    items = store.search(
+        user_id=user_id,
+        search_query=search_query,
+        tags=tags,
+        start_date=start_date,
+        end_date=end_date,
+        date=date,
+        is_favorited=is_favorited,
+        is_read=is_read,
+        is_annotated=is_annotated
+    )
         
-    # 按租户过滤
-    items = [i for i in items if i.get("user_id", "local_admin") == user_id]
-        
-    # 支持按是否有批注过滤 (Notes 和 普通 Feed 都可以同构在 items 里)
-    if is_annotated is not None:
-        items = [
-            i for i in items 
-            if bool(i.get("is_annotated") or i.get("annotation")) == is_annotated
-        ]
-        
-    # 统一按时间线 (Timeline) 倒序
+    # 2. 混合排序：先按到达时间倒序
     def get_time(item):
         return item.get("published_at") or item.get("created_at") or ""
 
     items.sort(key=get_time, reverse=True)
     
-    # 分页下发
+    # 3. 未读优先强制置顶 (抖音引力流体验)
+    # is_read 为 False 往前排, is_read 为 True 往后排
+    items.sort(key=lambda x: 1 if x.get("is_read", False) else 0)
+    
+    # 4. 分页下发
     start = (page - 1) * limit
     end = start + limit
     paginated_items = items[start:end]
@@ -198,6 +214,100 @@ async def get_feed(
         "limit": limit,
         "has_more": end < len(items)
     }
+
+
+@app.put("/api/v1/feed/{item_id}")
+async def update_feed_item(
+    item_id: str,
+    req: FeedUpdateRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """[NEW] 修改单条 Feed 卡片（编辑或打标签）"""
+    store = ItemStore(_config)
+    updates = req.model_dump(exclude_unset=True)
+    updated_item = store.update_item(item_id, updates)
+    if not updated_item:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"status": "success", "item": updated_item}
+
+
+@app.put("/api/v1/feed/{item_id}/read")
+async def mark_feed_read(item_id: str, user_id: str = Depends(get_current_user)):
+    """[NEW] 标记卡片已读"""
+    store = ItemStore(_config)
+    updated_item = store.update_item(item_id, {"is_read": True})
+    if not updated_item:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"status": "success", "is_read": True}
+
+
+@app.put("/api/v1/feed/{item_id}/like")
+async def toggle_feed_like(item_id: str, user_id: str = Depends(get_current_user)):
+    """[NEW] 翻转卡片 Favorite 状态"""
+    store = ItemStore(_config)
+    item = store.get_by_id(item_id)
+    if not item:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    new_state = not item.get("is_favorited", False)
+    updated_item = store.update_item(item_id, {"is_favorited": new_state})
+    return {"status": "success", "is_favorited": new_state}
+
+
+@app.get("/api/v1/export/feed")
+async def export_feed_csv(
+    search_query: Optional[str] = None,
+    tags: Optional[List[str]] = Query(default=None),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    date: Optional[str] = None, 
+    is_favorited: Optional[bool] = None,
+    is_read: Optional[bool] = None,
+    is_annotated: Optional[bool] = None,
+    user_id: str = Depends(get_current_user)
+):
+    """[NEW] 根据当前过滤条件导出 Feed 数据（CSV格式）"""
+    store = ItemStore(_config)
+    items = store.search(
+        user_id=user_id,
+        search_query=search_query,
+        tags=tags,
+        start_date=start_date,
+        end_date=end_date,
+        date=date,
+        is_favorited=is_favorited,
+        is_read=is_read,
+        is_annotated=is_annotated
+    )
+    
+    import csv
+    import io
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Title", "URL", "Source", "Date", "Content Snippet", "Tags", "My Annotation", "Is Read", "Is Favorited"])
+    
+    for i in items:
+        writer.writerow([
+            i.get("title", ""),
+            i.get("url", ""),
+            i.get("source", ""),
+            i.get("published_at") or i.get("created_at"),
+            (i.get("content", "")[:200]).replace("\n", " "),
+            ",".join(i.get("tags", [])),
+            i.get("annotation", ""),
+            i.get("is_read", False),
+            i.get("is_favorited", False)
+        ])
+    
+    csv_str = output.getvalue()
+    return Response(
+        content=csv_str, 
+        media_type="text/csv", 
+        headers={"Content-Disposition": "attachment; filename=feed_export.csv"}
+    )
 
 
 @app.post("/api/v1/extract/quick")
@@ -255,9 +365,27 @@ async def update_tags(tags_data: TagsUpdate, user_id: str = Depends(get_current_
 # =====================================================================
 
 @app.get("/api/v1/sources")
-async def get_sources(user_id: str = Depends(get_current_user)):
-    """[MODIFIED] 返回含 cron_interval 与 default_tags 的 Source"""
-    return [s.model_dump() for s in _config.sources if getattr(s, 'user_id', 'local_admin') == user_id]
+async def get_sources(
+    status: Optional[str] = None, 
+    tag: Optional[str] = None, 
+    search_query: Optional[str] = None,
+    user_id: str = Depends(get_current_user)
+):
+    """[MODIFIED] 返回含 cron_interval 与 default_tags 的 Source，并支持高级过滤"""
+    sources = [s.model_dump() for s in _config.sources if getattr(s, 'user_id', 'local_admin') == user_id]
+    
+    if status is not None:
+        is_enabled = status.lower() in ("active", "enabled", "true", "1")
+        sources = [s for s in sources if s.get("enabled", False) == is_enabled]
+        
+    if tag:
+        sources = [s for s in sources if tag in s.get("default_tags", []) or tag == s.get("category")]
+        
+    if search_query:
+        q = search_query.lower()
+        sources = [s for s in sources if q in s.get("name", "").lower() or q in s.get("url", "").lower()]
+        
+    return sources
 
 
 @app.post("/api/v1/sources")
@@ -290,14 +418,61 @@ async def delete_source(source_index: int, user_id: str = Depends(get_current_us
     return {"status": "error", "message": "Source not found"}
 
 
+@app.delete("/api/v1/sources/bulk")
+async def delete_sources_bulk(req: SourceBulkRequest, user_id: str = Depends(get_current_user)):
+    """[NEW] 批量删除 Source"""
+    # 倒序删除避免索引越界
+    for idx in sorted(req.ids, reverse=True):
+        if 0 <= idx < len(_config.sources):
+            _config.sources.pop(idx)
+    _save_config()
+    return {"status": "success"}
+
+
+@app.put("/api/v1/sources/bulk/status")
+async def update_sources_bulk_status(req: SourceBulkStatusRequest, user_id: str = Depends(get_current_user)):
+    """[NEW] 批量更新 Source 启用状态"""
+    for idx in set(req.ids):
+        if 0 <= idx < len(_config.sources):
+            _config.sources[idx].enabled = req.enabled
+    _save_config()
+    return {"status": "success"}
+
+
 @app.get("/api/v1/prompts/{stage}")
 async def get_prompt_api(stage: str, user_id: str = Depends(get_current_user)):
-    """[NEW] 读取指定阶段 Prompt"""
+    """读取指定阶段 Prompt 的当前版本和基本历史"""
     content = get_prompt(stage)
     if content is None:
         return {"status": "error", "message": f"Stage {stage} not found or prompt empty"}
     history = get_prompt_history(stage)
     return {"content": content, "history": history}
+
+
+@app.get("/api/v1/prompts/{stage}/versions")
+async def get_prompt_versions_api(stage: str, user_id: str = Depends(get_current_user)):
+    """[NEW] 获取某阶段的所有历史版本清单"""
+    try:
+        history = get_prompt_history(stage)
+        return {"status": "success", "versions": history}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/v1/prompts/{stage}/versions")
+async def restore_prompt_version_api(stage: str, req: PromptVersionRestoreRequest, user_id: str = Depends(get_current_user)):
+    """[NEW] 恢复到指定的 Prompt 版本"""
+    try:
+        old_content = get_prompt_version(stage, req.version)
+        if not old_content:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Version not found")
+        
+        # 将老版本内容写回到当前，同时在内部作为一次新修改（会产生新的当前版）
+        update_prompt(stage, old_content)
+        return {"status": "success", "content": old_content}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 @app.put("/api/v1/prompts/{stage}")
@@ -360,6 +535,67 @@ async def update_environment(env: EnvironmentConfig, user_id: str = Depends(get_
     _config.environment = env
     _save_config()
     return {"status": "success"}
+
+
+@app.post("/api/v1/system/test-connection")
+async def test_connection(req: TestConnectionRequest, user_id: str = Depends(get_current_user)):
+    """[NEW] 连通性测试 API (支持代理)"""
+    # 查找 Provider
+    provider_name = req.provider_name or _config.llm.provider
+    provider = next((p for p in _config.providers if p.name.lower() == provider_name.lower()), None)
+    
+    if not provider:
+        # Fallback to default llm mapping if provider entry doesn't exist yet but user wants to test
+        api_key = os.environ.get(_config.llm.api_key_env, "")
+        api_base = _config.llm.api_base
+        proxy_url = None
+    else:
+        api_key = provider.api_key
+        api_base = provider.api_base
+        proxy_url = getattr(provider, "proxy_url", None)
+        
+    start_time = time.time()
+    try:
+        # Construct testing client
+        transport = None
+        if proxy_url:
+            from httpx_socks import AsyncProxyTransport
+            if proxy_url.startswith("socks"):
+                transport = AsyncProxyTransport.from_url(proxy_url)
+                
+        # Simple HTTP probe to the models endpoint (standard for OpenAI compatibles including DeepSeek/Zhipu/etc)
+        # We only send an OPTIONS/GET to check ping speed
+        probe_url = api_base.rstrip("/") + "/models" if "openai" in api_base.lower() or "deepseek" in api_base.lower() or "zhipu" in api_base.lower() else api_base
+        
+        async with httpx.AsyncClient(transport=transport, timeout=10.0) as client:
+            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            # Some non-openai endpoints might fail on /models, so we gracefully catch 404s and just measure connection
+            response = await client.get(probe_url, headers=headers)
+            
+        latency = int((time.time() - start_time) * 1000)
+        
+        if response.status_code in (200, 401, 403, 404, 405): # Connect success, Auth might fail, but connection is OK
+            success = response.status_code == 200
+            error = f"Auth/Endpoint error (HTTP {response.status_code})" if not success else None
+            return {
+                "success": success,
+                "latency_ms": latency,
+                "error": error
+            }
+        else:
+            return {
+                "success": False,
+                "latency_ms": latency,
+                "error": f"HTTP {response.status_code}"
+            }
+            
+    except Exception as e:
+        latency = int((time.time() - start_time) * 1000)
+        return {
+            "success": False,
+            "latency_ms": latency,
+            "error": str(e)
+        }
 
 
 # =====================================================================
@@ -450,3 +686,6 @@ def start_server(config: AppConfig = None, host: str = "0.0.0.0", port: int = No
         _config = config
         _pipeline = Pipeline(config)
     uvicorn.run(app, host=host, port=port)
+
+if __name__ == "__main__":
+    start_server()

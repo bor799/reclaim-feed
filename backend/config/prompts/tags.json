@@ -1,9 +1,13 @@
 {
   "categories": {
-    "AI进展": ["大模型", "Agent", "AGI", "RAG"],
-    "投资策略": ["美股", "期权", "宏观", "加密货币"],
-    "技术实战": ["Python", "React", "架构设计", "踩坑经验"],
-    "认知提升": ["效能", "思维模型", "心智探索"],
-    "未分类": []
+    "Technology": [
+      "AI",
+      "ML",
+      "Programming"
+    ],
+    "Finance": [
+      "Investment",
+      "Trading"
+    ]
   }
 }

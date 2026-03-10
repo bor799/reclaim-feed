@@ -4,6 +4,9 @@
 
 import type { NavLinkProps } from '../types';
 
+// Export mobile utilities
+export * from './mobile';
+
 // ============ Class Name Utilities ============
 
 /**

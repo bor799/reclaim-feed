@@ -1,0 +1,749 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-03-10",
+  "project": "100X Knowledge Agent Backend",
+  "summary": {
+    "total_tests": 150,
+    "passing": 150,
+    "failing": 0,
+    "coverage_percent": 71,
+    "test_framework": "pytest 9.0.2",
+    "coverage_tool": "pytest-cov 7.0.0"
+  },
+  "modules": [
+    {
+      "name": "test_models",
+      "file": "tests/test_models.py",
+      "category": "unit",
+      "tests": 50,
+      "coverage": "100%",
+      "description": "Data model validation tests",
+      "test_classes": [
+        {
+          "name": "TestContentItem",
+          "tests": [
+            {
+              "name": "test_content_item_creation_minimal",
+              "description": "Test creating a ContentItem with minimal fields",
+              "input": {
+                "unique_id": "test_id",
+                "title": "Test Title",
+                "url": "https://example.com"
+              },
+              "expected_output": {
+                "unique_id": "test_id",
+                "title": "Test Title",
+                "url": "https://example.com",
+                "user_id": "local_admin",
+                "is_read": false,
+                "is_favorited": false,
+                "status": "UNREAD"
+              }
+            },
+            {
+              "name": "test_content_item_creation_full",
+              "description": "Test creating a ContentItem with all fields",
+              "input": {
+                "user_id": "test_user",
+                "title": "Full Test Title",
+                "url": "https://example.com/full",
+                "author": "Test Author",
+                "content": "Test content",
+                "source": "rss",
+                "quality_score": 8.5,
+                "quality_decision": "PASS",
+                "status": "READ"
+              },
+              "expected_output": {
+                "user_id": "test_user",
+                "quality_score": 8.5,
+                "quality_decision": "PASS",
+                "status": "READ"
+              }
+            },
+            {
+              "name": "test_content_item_enum_defaults",
+              "description": "Test ContentItem enum default values"
+            },
+            {
+              "name": "test_content_item_lists_default_empty",
+              "description": "Test that list fields default to empty lists"
+            },
+            {
+              "name": "test_content_item_optional_fields",
+              "description": "Test ContentItem optional fields"
+            },
+            {
+              "name": "test_content_item_with_user_notes",
+              "description": "Test ContentItem with user notes"
+            },
+            {
+              "name": "test_content_item_extraction_dict",
+              "description": "Test ContentItem with extraction dictionary"
+            }
+          ]
+        },
+        {
+          "name": "TestSourceConfig",
+          "tests": [
+            {
+              "name": "test_source_config_minimal",
+              "description": "Test creating SourceConfig with minimal fields"
+            },
+            {
+              "name": "test_source_config_full",
+              "description": "Test creating SourceConfig with all fields"
+            },
+            {
+              "name": "test_source_config_all_types",
+              "description": "Test SourceConfig with all source types",
+              "source_types": ["rss", "twitter", "wechat", "youtube", "bilibili", "import"]
+            },
+            {
+              "name": "test_source_config_tags_default",
+              "description": "Test SourceConfig default_tags defaults to empty list"
+            },
+            {
+              "name": "test_source_config_extra_default",
+              "description": "Test SourceConfig extra defaults to empty dict"
+            }
+          ]
+        },
+        {
+          "name": "TestAppConfig",
+          "tests": [
+            {
+              "name": "test_app_config_default",
+              "description": "Test creating AppConfig with all defaults"
+            },
+            {
+              "name": "test_app_config_with_llm",
+              "description": "Test AppConfig with custom LLM config"
+            },
+            {
+              "name": "test_app_config_with_providers",
+              "description": "Test AppConfig with multiple providers"
+            },
+            {
+              "name": "test_app_config_with_sources",
+              "description": "Test AppConfig with multiple sources"
+            },
+            {
+              "name": "test_app_config_with_bots",
+              "description": "Test AppConfig with bot configuration"
+            },
+            {
+              "name": "test_app_config_with_environment",
+              "description": "Test AppConfig with environment settings"
+            }
+          ]
+        },
+        {
+          "name": "TestFilterConfig",
+          "tests": [
+            {
+              "name": "test_filter_config_defaults",
+              "description": "Test FilterConfig default values"
+            },
+            {
+              "name": "test_filter_config_custom",
+              "description": "Test FilterConfig with custom values"
+            }
+          ]
+        },
+        {
+          "name": "TestExtractionConfig",
+          "tests": [
+            {
+              "name": "test_extraction_config_defaults",
+              "description": "Test ExtractionConfig default values"
+            },
+            {
+              "name": "test_extraction_config_custom",
+              "description": "Test ExtractionConfig with custom values"
+            }
+          ]
+        },
+        {
+          "name": "TestOutputConfig",
+          "tests": [
+            {
+              "name": "test_output_config_defaults",
+              "description": "Test OutputConfig default values"
+            },
+            {
+              "name": "test_output_config_custom",
+              "description": "Test OutputConfig with custom values"
+            }
+          ]
+        },
+        {
+          "name": "TestLLMConfig",
+          "tests": [
+            {
+              "name": "test_llm_config_defaults",
+              "description": "Test LLMConfig default values"
+            },
+            {
+              "name": "test_llm_config_custom",
+              "description": "Test LLMConfig with custom values"
+            }
+          ]
+        },
+        {
+          "name": "TestProviderConfig",
+          "tests": [
+            {
+              "name": "test_provider_config_minimal",
+              "description": "Test ProviderConfig with minimal fields"
+            },
+            {
+              "name": "test_provider_config_full",
+              "description": "Test ProviderConfig with all fields"
+            },
+            {
+              "name": "test_provider_config_optional_proxy",
+              "description": "Test ProviderConfig without proxy"
+            }
+          ]
+        },
+        {
+          "name": "TestBotConfig",
+          "tests": [
+            {
+              "name": "test_bot_config_defaults",
+              "description": "Test BotConfig default values"
+            },
+            {
+              "name": "test_bot_config_telegram",
+              "description": "Test BotConfig with Telegram settings"
+            },
+            {
+              "name": "test_bot_config_feishu",
+              "description": "Test BotConfig with Feishu webhook"
+            }
+          ]
+        },
+        {
+          "name": "TestEnvironmentConfig",
+          "tests": [
+            {
+              "name": "test_environment_config_defaults",
+              "description": "Test EnvironmentConfig default values"
+            },
+            {
+              "name": "test_environment_config_custom",
+              "description": "Test EnvironmentConfig with custom values"
+            }
+          ]
+        },
+        {
+          "name": "TestRequestModels",
+          "tests": [
+            {
+              "name": "test_feed_update_request_minimal",
+              "description": "Test FeedUpdateRequest with minimal fields"
+            },
+            {
+              "name": "test_feed_update_request_partial",
+              "description": "Test FeedUpdateRequest with partial updates"
+            },
+            {
+              "name": "test_feed_update_request_full",
+              "description": "Test FeedUpdateRequest with all fields"
+            },
+            {
+              "name": "test_source_bulk_request",
+              "description": "Test SourceBulkRequest"
+            },
+            {
+              "name": "test_source_bulk_status_request",
+              "description": "Test SourceBulkStatusRequest"
+            },
+            {
+              "name": "test_prompt_version_restore_request",
+              "description": "Test PromptVersionRestoreRequest"
+            },
+            {
+              "name": "test_test_connection_request_default",
+              "description": "Test TestConnectionRequest with defaults"
+            },
+            {
+              "name": "test_test_connection_request_with_provider",
+              "description": "Test TestConnectionRequest with provider"
+            }
+          ]
+        },
+        {
+          "name": "TestUserStats",
+          "tests": [
+            {
+              "name": "test_user_stats_defaults",
+              "description": "Test UserStats default values"
+            },
+            {
+              "name": "test_user_stats_with_values",
+              "description": "Test UserStats with values"
+            }
+          ]
+        },
+        {
+          "name": "TestEnums",
+          "tests": [
+            {
+              "name": "test_source_type_values",
+              "description": "Test SourceType enum values",
+              "expected_values": {
+                "RSS": "rss",
+                "TWITTER": "twitter",
+                "WECHAT": "wechat",
+                "YOUTUBE": "youtube",
+                "BILIBILI": "bilibili",
+                "IMPORT": "import"
+              }
+            },
+            {
+              "name": "test_item_status_values",
+              "description": "Test ItemStatus enum values",
+              "expected_values": {
+                "UNREAD": "未读",
+                "READ": "已读",
+                "DEEP_READ": "精读"
+              }
+            },
+            {
+              "name": "test_decision_values",
+              "description": "Test Decision enum values",
+              "expected_values": {
+                "PASS": "通过",
+                "EDGE": "边缘",
+                "REJECT": "拒绝"
+              }
+            }
+          ]
+        },
+        {
+          "name": "TestModelValidation",
+          "tests": [
+            {
+              "name": "test_content_item_url_validation",
+              "description": "Test that URL is stored as-is"
+            },
+            {
+              "name": "test_multiple_tags",
+              "description": "Test ContentItem with multiple tags"
+            },
+            {
+              "name": "test_reread_worthy_flag",
+              "description": "Test reread_worthy flag"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "test_api",
+      "file": "tests/test_api.py",
+      "category": "api",
+      "tests": 8,
+      "description": "Basic API endpoint tests",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/v1/health",
+          "test_name": "test_health",
+          "expected_status": 200,
+          "expected_response": {
+            "status": "ok",
+            "version": "2.0.0",
+            "multi_tenant": true
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/user/stats",
+          "test_name": "test_user_stats",
+          "expected_status": 200,
+          "expected_fields": ["total_notes", "total_tags"]
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/feed",
+          "test_name": "test_get_feed",
+          "expected_status": 200,
+          "query_params": {
+            "limit": 10
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/sources",
+          "test_name": "test_get_sources",
+          "expected_status": 200,
+          "expected_response_type": "list"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/sources",
+          "test_name": "test_add_source",
+          "expected_status": [200, 500],
+          "request_body": {
+            "name": "Test Source",
+            "type": "rss",
+            "url": "https://example.com/rss",
+            "enabled": true,
+            "cron_interval": "12h"
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/settings/providers",
+          "test_name": "test_get_settings_providers",
+          "expected_status": 200,
+          "expected_response_type": "list"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/system/test-connection",
+          "test_name": "test_test_connection_no_provider",
+          "expected_status": 200,
+          "request_body": {
+            "provider_name": "NonExistent"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/extract/quick",
+          "test_name": "test_quick_extract",
+          "expected_status": 200,
+          "request_body": {
+            "urls": ["https://example.com"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "test_feed_api",
+      "file": "tests/test_feed_api.py",
+      "category": "api",
+      "tests": 29,
+      "description": "Feed API tests with filters, pagination, and export",
+      "test_classes": [
+        {
+          "name": "TestFeedAPI",
+          "tests": 21,
+          "description": "Core Feed API functionality",
+          "endpoints": [
+            {
+              "method": "GET",
+              "path": "/api/v1/feed",
+              "tests": [
+                "test_feed_basic",
+                "test_feed_pagination",
+                "test_feed_search_query",
+                "test_feed_tags_filter",
+                "test_feed_date_filter",
+                "test_feed_date_range_filter",
+                "test_feed_favorited_filter",
+                "test_feed_read_filter",
+                "test_feed_annotated_filter",
+                "test_feed_combined_filters",
+                "test_feed_unread_priority"
+              ]
+            },
+            {
+              "method": "PUT",
+              "path": "/api/v1/feed/{id}",
+              "tests": ["test_update_feed_item"]
+            },
+            {
+              "method": "PUT",
+              "path": "/api/v1/feed/{id}/read",
+              "tests": ["test_mark_feed_read"]
+            },
+            {
+              "method": "PUT",
+              "path": "/api/v1/feed/{id}/like",
+              "tests": ["test_toggle_feed_like"]
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/export/feed",
+              "tests": ["test_export_feed_csv", "test_export_feed_csv_with_filters"]
+            },
+            {
+              "method": "POST",
+              "path": "/api/v1/extract/quick",
+              "tests": ["test_quick_extract_single", "test_quick_extract_multiple", "test_quick_extract_empty_urls"]
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/tags",
+              "tests": ["test_get_tags"]
+            },
+            {
+              "method": "PUT",
+              "path": "/api/v1/tags",
+              "tests": ["test_update_tags"]
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/user/stats",
+              "tests": ["test_user_stats"]
+            }
+          ]
+        },
+        {
+          "name": "TestFeedAPIIntegration",
+          "tests": 2,
+          "description": "Feed workflow integration tests",
+          "test_names": [
+            "test_feed_workflow",
+            "test_search_and_export_workflow"
+          ]
+        },
+        {
+          "name": "TestFeedAPIEdgeCases",
+          "tests": 6,
+          "description": "Feed API edge case tests",
+          "test_names": [
+            "test_feed_large_limit",
+            "test_feed_zero_limit",
+            "test_feed_negative_page",
+            "test_feed_special_characters_search",
+            "test_feed_unicode_tags"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "test_settings_api",
+      "file": "tests/test_settings_api.py",
+      "category": "api",
+      "tests": 30,
+      "description": "Settings API tests for providers, bots, and environment",
+      "test_classes": [
+        {
+          "name": "TestSettingsAPI",
+          "tests": 19,
+          "description": "Settings API endpoints",
+          "endpoints": [
+            {
+              "method": "GET",
+              "path": "/api/v1/settings",
+              "tests": ["test_get_all_settings"]
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/settings/providers",
+              "tests": ["test_get_providers", "test_get_providers_empty"]
+            },
+            {
+              "method": "PUT",
+              "path": "/api/v1/settings/providers",
+              "tests": ["test_update_providers", "test_update_providers_empty", "test_update_providers_with_proxy"]
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/settings/bots",
+              "tests": ["test_get_bots", "test_get_bots_empty"]
+            },
+            {
+              "method": "PUT",
+              "path": "/api/v1/settings/bots",
+              "tests": ["test_update_bots", "test_update_bots_partial"]
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/settings/environment",
+              "tests": ["test_get_environment"]
+            },
+            {
+              "method": "PUT",
+              "path": "/api/v1/settings/environment",
+              "tests": ["test_update_environment", "test_update_environment_locale"]
+            },
+            {
+              "method": "POST",
+              "path": "/api/v1/system/test-connection",
+              "tests": ["test_test_connection_default_provider", "test_test_connection_named_provider", "test_test_connection_nonexistent_provider", "test_test_connection_with_proxy"]
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/export/json",
+              "tests": ["test_export_json"]
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/export/markdown",
+              "tests": ["test_export_markdown"]
+            }
+          ]
+        },
+        {
+          "name": "TestSettingsAPIIntegration",
+          "tests": 3,
+          "description": "Settings workflow tests",
+          "test_names": [
+            "test_settings_workflow",
+            "test_provider_connection_workflow",
+            "test_export_multiple_formats"
+          ]
+        },
+        {
+          "name": "TestSettingsAPIEdgeCases",
+          "tests": 5,
+          "description": "Settings edge case tests",
+          "test_names": [
+            "test_providers_with_special_characters",
+            "test_environment_with_path_traversal",
+            "test_bots_with_invalid_tokens",
+            "test_multiple_providers_same_name",
+            "test_connection_timeout_handling"
+          ]
+        },
+        {
+          "name": "TestRunPipelineAPI",
+          "tests": 3,
+          "description": "Pipeline execution API tests",
+          "endpoints": [
+            {
+              "method": "POST",
+              "path": "/api/v1/run",
+              "tests": ["test_run_pipeline_dry_run", "test_run_pipeline_normal", "test_run_pipeline_multiple_times"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "test_sources_api",
+      "file": "tests/test_sources_api.py",
+      "category": "api",
+      "tests": 33,
+      "description": "Sources API and Prompts API tests",
+      "test_classes": [
+        {
+          "name": "TestSourcesAPI",
+          "tests": 17,
+          "description": "Sources CRUD operations",
+          "endpoints": [
+            {
+              "method": "GET",
+              "path": "/api/v1/sources",
+              "tests": ["test_get_sources_basic", "test_get_sources_with_status_filter", "test_get_sources_with_tag_filter", "test_get_sources_with_search_query", "test_get_sources_combined_filters"]
+            },
+            {
+              "method": "POST",
+              "path": "/api/v1/sources",
+              "tests": ["test_add_source_minimal", "test_add_source_full", "test_add_source_all_types", "test_add_source_invalid_type"]
+            },
+            {
+              "method": "PUT",
+              "path": "/api/v1/sources/{index}",
+              "tests": ["test_update_source", "test_update_source_invalid_index"]
+            },
+            {
+              "method": "DELETE",
+              "path": "/api/v1/sources/{index}",
+              "tests": ["test_delete_source", "test_delete_source_invalid_index"]
+            },
+            {
+              "method": "DELETE",
+              "path": "/api/v1/sources/bulk",
+              "tests": ["test_delete_sources_bulk", "test_delete_sources_bulk_empty"]
+            },
+            {
+              "method": "PUT",
+              "path": "/api/v1/sources/bulk/status",
+              "tests": ["test_update_sources_bulk_status_enable", "test_update_sources_bulk_status_disable", "test_update_sources_bulk_status_empty"]
+            }
+          ]
+        },
+        {
+          "name": "TestPromptsAPI",
+          "tests": 8,
+          "description": "Prompt management API",
+          "endpoints": [
+            {
+              "method": "GET",
+              "path": "/api/v1/prompts/{stage}",
+              "tests": ["test_get_prompt_scoring", "test_get_prompt_extraction", "test_get_prompt_invalid_stage"]
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/prompts/{stage}/versions",
+              "tests": ["test_get_prompt_versions"]
+            },
+            {
+              "method": "POST",
+              "path": "/api/v1/prompts/{stage}/versions",
+              "tests": ["test_restore_prompt_version", "test_restore_prompt_invalid_version"]
+            },
+            {
+              "method": "PUT",
+              "path": "/api/v1/prompts/{stage}",
+              "tests": ["test_update_prompt", "test_update_prompt_empty"]
+            }
+          ]
+        },
+        {
+          "name": "TestSourcesAPIIntegration",
+          "tests": 2,
+          "description": "Sources and prompts workflow tests",
+          "test_names": [
+            "test_source_lifecycle",
+            "test_prompt_workflow"
+          ]
+        },
+        {
+          "name": "TestSourcesAPIEdgeCases",
+          "tests": 6,
+          "description": "Sources edge case tests",
+          "test_names": [
+            "test_sources_with_unicode_name",
+            "test_sources_very_long_url",
+            "test_cron_intervals",
+            "test_bulk_operations_with_duplicates",
+            "test_negative_source_index"
+          ]
+        }
+      ]
+    }
+  ],
+  "api_endpoints_summary": {
+    "feed": {
+      "base_path": "/api/v1/feed",
+      "methods": ["GET", "PUT"],
+      "features": ["pagination", "filtering", "search", "export"]
+    },
+    "sources": {
+      "base_path": "/api/v1/sources",
+      "methods": ["GET", "POST", "PUT", "DELETE"],
+      "features": ["crud", "bulk_operations", "filtering"]
+    },
+    "settings": {
+      "base_path": "/api/v1/settings",
+      "methods": ["GET", "PUT"],
+      "sub_paths": ["providers", "bots", "environment"]
+    },
+    "prompts": {
+      "base_path": "/api/v1/prompts",
+      "methods": ["GET", "PUT", "POST"],
+      "features": ["version_control"]
+    },
+    "export": {
+      "base_path": "/api/v1/export",
+      "formats": ["json", "csv", "markdown", "feed"]
+    },
+    "system": {
+      "base_path": "/api/v1/system",
+      "endpoints": ["test-connection"]
+    },
+    "pipeline": {
+      "base_path": "/api/v1/run",
+      "methods": ["POST"],
+      "features": ["dry_run"]
+    }
+  }
+}
