@@ -1,11 +1,3 @@
-/**
- * 本地测试环境 - API 配置
- *
- * 使用方法：
- * 1. 复制此文件到 frontend/src/services/api.ts
- * 2. 在组件中导入使用
- */
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 import { Source } from '../types';

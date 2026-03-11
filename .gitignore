@@ -23,5 +23,6 @@ build/
 
 # Temporary files
 .codepilot-uploads/
+local-test-env/
 *.log
 *.tmp

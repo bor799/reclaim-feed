@@ -17,5 +17,8 @@ COPY config/ ./config/
 # Install dependencies
 RUN uv sync --no-dev
 
-# Default command
-CMD ["uv", "run", "knowledge-agent"]
+# Expose port
+EXPOSE 8000
+
+# Default command - shell form for PORT variable expansion
+CMD sh -c "uv run knowledge-agent serve --port ${PORT:-8000}"
