@@ -1,6 +1,12 @@
+<div align="center">
+
 # 炼器房 · Reclaim Feed
 
-> **A local-first workspace for extracting, reading and reusing high-value information.**
+**做深，不做宽：一篇重要内容从进入系统到被理解、批注和再次使用。**
+
+*A local-first workspace for extracting, reading and reusing high-value information.*
+
+</div>
 
 多数信息工具擅长「做宽」：接入更多来源、生成更快摘要。炼器房关注另一个问题：**一篇真正重要的内容，怎样从进入系统到被理解、批注和再次使用？**
 
@@ -10,6 +16,11 @@ flowchart LR
     B --> C[统一阅读工作区]
     C --> D[批注与 Prompt 调整]
     D --> E[Markdown / 知识生产]
+    style A fill:#E9F4F2,stroke:#A9CFC8,stroke-width:2px,color:#1C3B36
+    style B fill:#DCEFEA,stroke:#37907F,stroke-width:2px,color:#0F3D33
+    style C fill:#E9F4F2,stroke:#A9CFC8,stroke-width:2px,color:#1C3B36
+    style D fill:#E9F4F2,stroke:#A9CFC8,stroke-width:2px,color:#1C3B36
+    style E fill:#DCEFEA,stroke:#37907F,stroke-width:2px,color:#0F3D33
 ```
 
 ## 产品判断
